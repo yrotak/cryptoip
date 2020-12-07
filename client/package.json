@@ -1,0 +1,21 @@
+{
+  "name": "Cryptoip",
+  "version": "1.0.0",
+  "description": "A fully encrypted voip / chat app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/electron/electron-quick-start",
+  "keywords": [
+    "cryptoip"
+  ],
+  "author": "Drayneur",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^11.0.3"
+  },
+  "dependencies": {
+    "remote": "^0.2.6"
+  }
+}

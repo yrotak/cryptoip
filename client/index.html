@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+  <meta charset="utf-8">
+  <title>cryptoip client</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+</head>
+<style media="screen">
+  body {
+    background: #232323;
+  }
+  input {
+    width: 80%;
+    margin-top: 5px;
+    background: #333333;
+    color: #ffffff;
+    border: none;
+    padding: 5px;
+  }
+  input:focus {
+    outline: none;
+  }
+  button {
+    user-select: none;
+    margin-top: 5px;
+    background: #333333;
+    color: #ffffff;
+    border: none;
+    padding: 5px;
+    transition: 1s background;
+  }
+  button:hover {
+    transition: 0.2s background;
+    background: #434343;
+  }
+  button:focus {
+    outline: none;
+  }
+</style>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.js" integrity="sha512-Jr0UIR/Q8MUX+93zjDOhuDUKLqJZObtwpkLJQcR9qMaLgL0thet39IORuavUaZFkZ8a4ktrUsKPM9mf5LWMduA==" crossorigin="anonymous"></script>
+  <script src="crypto.js"></script>
+  <script src="aes.js"></script>
+  <div id="connect-controls">
+    <input id="ip-input" type="text" placeholder="IP:PORT"><br>
+    <input id="key-input" type="text" maxlength="16" placeholder="Key (16 char)"><br>
+    <button id="randomkey-button">Random key</button>
+    <button id="connect-button">Connect</button><br>
+    <span id="status"></span>
+  </div>
+</body>
+<script src="app.js"></script>
+</html>

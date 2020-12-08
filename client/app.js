@@ -5,23 +5,30 @@ function genID(length, chars) {
 }
 var iv = new Uint8Array();
 var key = new Uint8Array();
-var clientID;
+var clientID = "";
+var socket;
+var voip;
+document.getElementById("connected").style.display = "none";
+document.getElementById("disconnect-button").addEventListener("click", function(e) {
+  document.getElementById("connect-controls").style.display = "block";
+  document.getElementById("connected").style.display = "none";
+  clearInterval(voip);
+  socket.disconnect();
+});
 document.getElementById("connect-button").addEventListener("click", function(e) {
   clientID = genID(16, '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ');
   document.title = "criptoip client - " + clientID;
-  document.getElementById("status").style.color = "orange";
-  document.getElementById("status").textContent = "Client id generated: " + clientID;
+  console.log()
   var enc = new TextEncoder();
 
   iv = enc.encode(document.getElementById("key-input").value);
   key = enc.encode(document.getElementById("key-input").value);
-  document.getElementById("status").style.color = "orange";
-  document.getElementById("status").textContent = "Key encoded!";
-  var socket = io.connect('http://' + document.getElementById("ip-input").value + '/');
+
+  socket = io.connect('http://' + document.getElementById("ip-input").value + '/');
   socket.on("connect", function() {
-    document.getElementById("status").style.color = "green";
-    document.getElementById("status").textContent = "Connected";
-    setInterval(function() {
+    document.getElementById("connect-controls").style.display = "none";
+    document.getElementById("connected").style.display = "block";
+    voip = setInterval(function() {
       var constraints = {
         audio: true
       };
@@ -37,7 +44,9 @@ document.getElementById("connect-button").addEventListener("click", function(e) 
           var blob = new Blob(this.chunks, {
             'type': 'audio/ogg; codecs=opus'
           });
-          blob.arrayBuffer().then(array => socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), key.buffer, iv.buffer), clientID));
+          if(document.getElementById("mute").checked == false) {
+            blob.arrayBuffer().then(array => socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), key.buffer, iv.buffer), clientID));
+          }
         };
         mediaRecorder.start();
         setTimeout(function() {
@@ -56,9 +65,6 @@ document.getElementById("connect-button").addEventListener("click", function(e) 
       }
     });
   });
-  document.getElementById("status").style.color = "red";
-  document.getElementById("status").textContent = "Disconnected";
-  clientID = "";
 });
 document.getElementById("randomkey-button").addEventListener("click", function(e) {
   document.getElementById("key-input").value = genID(16, "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");

@@ -21,7 +21,6 @@ using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](htt
 
 ### TODO:
 - Fix delay between clients
-- Fix a bug that appear when you spam connections to a server
 
 ### Maybe add:
 - Real time chat

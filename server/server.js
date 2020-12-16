@@ -13,7 +13,15 @@ http.listen(port, function() {
    console.log('Cryptoip started on port ' + port);
 });
 io.sockets.on('connection', function(socket) {
+  io.emit('UserConnected');
   socket.on('radio', function(blob, clientID) {
     io.emit('voice', blob, clientID);
   });
+  socket.on('message', function(message, clientID) {
+    if(message != "" && message != " ")
+      io.emit('messageReceive', message, clientID);
+  });
+  socket.on('disconnect', function() {
+    io.emit('UserDisconnected');
+  })
 });

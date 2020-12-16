@@ -1,6 +1,6 @@
 # cryptoip
-> VOIP Client / Server in nodeJs(electron) encrypted in AES
-#### Current version 1.1
+> VOIP Client / Server in nodeJs(electron) encrypted in AES and xor
+#### Current version 1.2
 using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](https://github.com/wader)
 <br>
 ### Requirement:

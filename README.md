@@ -11,6 +11,7 @@ using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](htt
 - socket.io
 #### Client
 - electron
+- socket.io
 
 ### Features:
 - Real time voip
@@ -18,10 +19,10 @@ using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](htt
 - GUI with electron JS
 - Server can handle mutliple clients
 - Good voice quality
+- Chat encrypted with xor cipher
 
 ### TODO:
 - Fix delay between clients
 
 ### Maybe add:
-- Real time chat
 - Usernames

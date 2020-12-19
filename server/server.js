@@ -8,12 +8,16 @@ const port = 3000;
 app.get('/', function(req,res) {
     res.sendStatus(400);
 });
+var clients = [];
+http.listen(port);
 
-http.listen(port, function() {
-   console.log('Cryptoip started on port ' + port);
-});
 io.sockets.on('connection', function(socket) {
-  io.emit('UserConnected');
+  socket.on('username', function(username) {
+    var id = socket.id;
+    clients.push({username, id});
+    console.log("\nnew client connected with username: " + username + " and id: "+ socket.id+"!");
+    io.emit('UserConnected', JSON.stringify(clients));
+  });
   socket.on('radio', function(blob, clientID) {
     io.emit('voice', blob, clientID);
   });
@@ -22,6 +26,13 @@ io.sockets.on('connection', function(socket) {
       io.emit('messageReceive', message, clientID);
   });
   socket.on('disconnect', function() {
-    io.emit('UserDisconnected');
-  })
+    var username = "";
+    for(let i = 0; i < clients.length; i++) {
+      if(clients[i]["id"] == socket.id) {
+        clients.splice(clients[i], 1);
+      }
+    }
+    console.log("\nthe client with id: "+ socket.id+" has disconnect!");
+    io.emit('UserDisconnected', JSON.stringify(clients));
+  });
 });

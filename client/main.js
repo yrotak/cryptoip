@@ -1,12 +1,17 @@
+/**
+ * @Date:   2020-12-05T23:36:55+01:00
+ * @Last modified time: 2020-12-19T23:03:13+01:00
+ * @License: MIT
+ */
+
 // Modules to control application life and create native browser window
 const {app, BrowserWindow} = require('electron')
 const path = require('path')
-
 function createWindow () {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 350,
-    height: 155,
+    width: 550,
+    height: 300,
     resizable: false,
     icon: __dirname + '/icon.ico',
     webPreferences: {
@@ -14,7 +19,7 @@ function createWindow () {
         enableRemoteModule: true
     }
   })
-  mainWindow.removeMenu();
+  //mainWindow.removeMenu();
   // and load the index.html of the app.
   mainWindow.loadFile('index.html')
 

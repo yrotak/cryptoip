@@ -24,5 +24,5 @@ using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](htt
 ### TODO:
 - Fix delay between clients
 
-### Maybe add:
+### Work in progress:
 - Usernames

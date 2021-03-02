@@ -1,0 +1,90 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+/* Main */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #131313;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #232323;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}
+.passSentence {
+    color: #ccc;
+}
+.title {
+    color: #ffffee;
+}
+.createNewPassSentence {
+    text-align: center;
+}
+.form-label {
+    display: block;
+}
+.form-input {
+    width: 400px;
+}
+.form-button-outline {
+    background: #131313;
+    color: #EEEEFF;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
+    display: block;
+    border: 1px solid #931621;
+    border-radius: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    transition: 0.2s;
+}
+
+.form-button-outline:hover {
+    background: #931621;
+    transition: 0.2s;
+}
+
+.form-button-outline:focus {
+    outline: none;
+}
+.form-button {
+    background: #931621;
+    color: #EEEEFF;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
+    display: block;
+    border: 1px solid #931621;
+    border-radius: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    transition: 0.2s;
+}
+
+.form-button:hover {
+    background: #6E1018;
+    transition: 0.2s;
+}
+
+.form-button:focus {
+    outline: none;
+}
+.setupClient {
+    text-align: center;
+    margin: 0 auto;
+}
+/* Login */
+
+/* Communication */

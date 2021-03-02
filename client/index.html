@@ -5,6 +5,7 @@
   <meta charset="utf-8">
   <title>cryptoip client</title>
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="app/css/cryptoip.css">
 </head>
 <style media="screen">
   @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
@@ -16,7 +17,6 @@
   }
 
   input[type="text"] {
-    width: 80%;
     margin-top: 5px;
     background: #333333;
     border: none;
@@ -145,49 +145,31 @@
     margin-top: 5px;
     width: 95%;
   }
-
-  ::-webkit-scrollbar {
-    width: 10px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: #131313;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: #232323;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: #333333;
-  }
 </style>
 
 <body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.js" integrity="sha512-Jr0UIR/Q8MUX+93zjDOhuDUKLqJZObtwpkLJQcR9qMaLgL0thet39IORuavUaZFkZ8a4ktrUsKPM9mf5LWMduA==" crossorigin="anonymous"></script>
-  <script src="crypto.js"></script>
-  <script src="aes.js"></script>
-  <div id="connected">
-    <div id="left-panel">
-      <button id="disconnect-button">Disconnect</button>
-      <input type="checkbox" id="mute">
-      <label for="mute">Mute</label>
-      <div id="messages">
+  <div ng-app="cryptoipApp">
+    <div ng-controller="mainController">
+      <div ng-if="isLoaded">
+        <div ng-view></div>
       </div>
-      <input id="message-input" type="text" placeholder="Enter message...">
+      <div ng-if="!isLoaded" class="createNewPassSentence">
+        <h2 class="title">Pass sentence</h2>
+        <h4 class="passSentence">{{passSentence}}</h4>
+        <input type="password" class="form-input" ng-model="code" placeholder="e.g 1234">
+        <p class="text">PS: If you create a password there is no way to get back your pass sentence</p>
+        <button class="form-button-outline" ng-click="setupClient(passSentence, false, null)">Skip password</button>
+        <button class="form-button" ng-click="setupClient(passSentence, true, code)">Setup password</button>
+      </div>
     </div>
-    <div id="right-panel">
-      <div id="users"></div>
-    </div>
-  </div>
-  <div id="connect-controls">
-    <input id="ip-input" type="text" placeholder="IP:PORT"><br>
-    <input id="key-input" type="text" maxlength="16" placeholder="Key (16 char)"><br>
-    <input id="username-input" type="text" maxlength="20" placeholder="Username (20 char)"><br>
-    <button id="randomkey-button">Random key</button>
-    <button id="connect-button">Connect</button><br>
   </div>
 </body>
-<script src="app.js"></script>
+<script src="3rdparty/angular.min.js"></script>
+<script src="3rdparty/angular-route.min.js"></script>
+<script src="3rdparty/socket.io.min.js"></script>
+<script src="3rdparty/crypto-js.min.js"></script>
+<script src="app/js/aes.js"></script>
+<script src="app/js/crypto.js"></script>
+<script src="app/js/app.js"></script>
 
 </html>

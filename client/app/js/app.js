@@ -1,4 +1,5 @@
 var socket = null;
+var currentServer = null;
 const cryptoip = angular.module("cryptoipApp", ["ngRoute"]);
 const fs = require('fs');
 const crypto = require('crypto')
@@ -6,7 +7,7 @@ cryptoip.config(["$routeProvider", function ($routeProvider) {
   $routeProvider
     .when("/", { templateUrl: "app/html/home.html" })
     .when("/login/", { templateUrl: "app/html/login.html" })
-    .when("/server/", { templateUrl: "app/html/server.html" })
+    .when("/channel/:channelName", { templateUrl: "app/html/channel.html" })
     .otherwise({ redirectTo: "/" });
 }]);
 cryptoip.controller("mainController", function ($scope) {
@@ -46,10 +47,27 @@ cryptoip.controller("mainController", function ($scope) {
   }
 });
 cryptoip.controller("homeController", function ($scope) {
-  $scope.connect = function(host) {
-    socket = io(host);
-    window.location.href = "#!/server/";
+  $scope.connect = function (host) {
+    socket = io.connect('http://' + host + '/');
+    currentServer = host;
+    socket.on("connect", () => {
+      window.location.href = "#!/channel/main";
+      console.log("connected");
+    });
   }
+});
+cryptoip.controller("channelController", function ($scope) {
+  $scope.clients = [];
+  $scope.host = currentServer;
+  socket.emit("connection");
+  socket.on("clientList", function (clientList) {
+    $scope.clients = clientList;
+    $scope.$apply();
+  });
+  socket.on("motd", function (motd) {
+    $scope.motd = motd;
+    $scope.$apply();
+  });
 });
 function encrypt(text, password) {
   var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
@@ -107,8 +125,6 @@ var iv = new Uint8Array();
 var key = new Uint8Array();
 var xorKey = "";
 var clientID = "";
-var clients = [];
-var lastClients = [];
 var socket;
 var voip;
 function makeid(length) {

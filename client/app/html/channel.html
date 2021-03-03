@@ -1,0 +1,16 @@
+<div ng-controller="channelController">
+    <div class="server-info">
+        <h2 class="title">{{host}}</h2>
+        <h5 class="title">{{motd}}</h5>
+    </div>
+    <div class="users">
+        <div ng-if="clients.length > 0">
+            <a class="channel-button" ng-repeat="client in clients" href="#!/channel/{{client}}">
+                @{{client}}
+            </a>
+        </div>
+        <div ng-if="clients.length === 0">
+            <p class="text">No user connected</p>
+        </div>
+    </div>
+</div>

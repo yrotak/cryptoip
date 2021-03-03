@@ -154,12 +154,14 @@
         <div ng-view></div>
       </div>
       <div ng-if="!isLoaded" class="createNewPassSentence">
-        <h2 class="title">Pass sentence</h2>
+        <h2 class="title passSentence-title">Pass sentence</h2>
         <h4 class="passSentence">{{passSentence}}</h4>
-        <input type="password" class="form-input" ng-model="code" placeholder="e.g 1234">
-        <p class="text">PS: If you create a password there is no way to get back your pass sentence</p>
-        <button class="form-button-outline" ng-click="setupClient(passSentence, false, null)">Skip password</button>
-        <button class="form-button" ng-click="setupClient(passSentence, true, code)">Setup password</button>
+        <input type="password" class="form-input passSentence-pass" ng-model="code" placeholder="e.g 1234">
+        <div class="inline">
+          <button class="form-button-outline" ng-click="setupClient(passSentence, false, null)">Skip password</button>
+          <button class="form-button" ng-click="setupClient(passSentence, true, code)">Setup password</button>
+        </div>
+        <p class="text passSentence-ps">PS: If you create a password and forget it there is no way to get back your pass sentence</p>
       </div>
     </div>
   </div>

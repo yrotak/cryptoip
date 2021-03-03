@@ -5697,3 +5697,13 @@ client/node_modules/yauzl/index.js
 client/node_modules/yauzl/LICENSE
 client/node_modules/yauzl/package.json
 client/node_modules/yauzl/README.md
+client/node_modules/cryptico/build
+client/node_modules/cryptico/lib/cryptico.js
+client/node_modules/cryptico/package.json
+client/node_modules/cryptico/README.md
+client/node_modules/cryptico/src/aes.js
+client/node_modules/cryptico/src/api.js
+client/node_modules/cryptico/src/hash.js
+client/node_modules/cryptico/src/jsbn.js
+client/node_modules/cryptico/src/random.js
+client/node_modules/cryptico/src/rsa.js

@@ -52,7 +52,6 @@ cryptoip.controller("homeController", function ($scope) {
   }
 });
 function encrypt(text, password) {
-  console.log(password.repeat(32).slice(0, 32));
   var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
   var crypted = cipher.update(text, 'utf8', 'hex')
   crypted += cipher.final('hex');

@@ -5,12 +5,14 @@
   <meta charset="utf-8">
   <title>cryptoip client</title>
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="3rdparty/all.min.css">
   <link rel="stylesheet" href="app/css/cryptoip.css">
 </head>
 
 <body>
   <div ng-app="cryptoipApp">
     <div ng-controller="mainController">
+      <div class="loading" ng-show="loading"></div>
       <div ng-if="isLoaded">
         <div ng-view></div>
       </div>
@@ -29,6 +31,7 @@
 </body>
 <script src="3rdparty/angular.min.js"></script>
 <script src="3rdparty/angular-route.min.js"></script>
+<script src="3rdparty/all.min.js"></script>
 <script src="3rdparty/socket.io.min.js"></script>
 <script src="app/js/aes.js"></script>
 <script src="app/js/crypto.js"></script>

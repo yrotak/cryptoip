@@ -1,5 +1,8 @@
 var socket = null;
 var currentServer = null;
+var username = null;
+var keyPair = null;
+var passSentence = null;
 const cryptoip = angular.module("cryptoipApp", ["ngRoute"]);
 const fs = require('fs');
 const crypto = require('crypto')
@@ -20,10 +23,12 @@ cryptoip.controller("mainController", function ($scope) {
         window.location.href = "#!/login/";
       } else {
         window.location.href = "#!/";
+        passSentence = JSON.parse(data).passsentence;
       }
     });
   } else {
     $scope.passSentence = createPassSentence().replace(/[-]+/g, " ");
+    passSentence = $scope.passSentence;
     $scope.setupClient = function (passSentence, usePassword, password) {
       if (usePassword) {
         fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, password) }), function (err) {
@@ -42,32 +47,60 @@ cryptoip.controller("mainController", function ($scope) {
     fs.readFile("config.json", function (err, data) {
       if (err) alert(err);
       $scope.passSentence = decrypt(JSON.parse(data).passsentence, password);
+      passSentence = $scope.passSentence;
       window.location.href = "#!/";
     });
   }
 });
 cryptoip.controller("homeController", function ($scope) {
-  $scope.connect = function (host) {
+  $scope.connect = function (host, user) {
     socket = io.connect('http://' + host + '/');
+    keyPair = createKeyPair(passSentence);
+    username = user;
     currentServer = host;
     socket.on("connect", () => {
       window.location.href = "#!/channel/main";
-      console.log("connected");
     });
   }
 });
-cryptoip.controller("channelController", function ($scope) {
-  $scope.clients = [];
+cryptoip.controller("channelController", function ($scope, $routeParams) {
+  $scope.channels = [];
   $scope.host = currentServer;
-  socket.emit("connection");
+  socket.emit("connection", username, crypto.createHash('sha256').update(passSentence).digest("hex"), keyPair.publicKey);
   socket.on("clientList", function (clientList) {
-    $scope.clients = clientList;
+    clientList.forEach(function (client) {
+      $scope.channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey });
+    });
     $scope.$apply();
+    $scope.channels.forEach(function (channel) {
+      if (channel.name == $routeParams.channelName) {
+        $scope.currentChannel = { name: channel.name, socketId: channel.socketId, messages: [], publicKey: channel.publicKey };
+        $scope.$apply();
+      } else if($routeParams.channelName == "main") {
+        $scope.currentChannel = { name: "main", socketId: "none", messages: [], publicKey: channel.publicKey };
+        $scope.$apply();
+      }
+    });
   });
   socket.on("motd", function (motd) {
     $scope.motd = motd;
     $scope.$apply();
   });
+  socket.on("kick", function (reason) {
+    alert(reason);
+  });
+  socket.on("message", function (message, author, signature) {
+    if (verify(message, signature, $scope.currentChannel.publicKey)) {
+      $scope.currentChannel.messages.push({ author: author, content: message, signature: signature, checked: true });
+    } else {
+      $scope.currentChannel.messages.push({ author: author, content: message, signature: signature, checked: false });
+    }
+    $scope.$apply();
+  });
+  $scope.sendMessage = function (message, receiver) {
+    socket.emit("message", message, sign(message, keyPair.privateKey, passSentence), receiver);
+    $scope.messageToSend = null;
+  }
 });
 function encrypt(text, password) {
   var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))

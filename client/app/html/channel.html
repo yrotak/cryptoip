@@ -1,16 +1,42 @@
 <div ng-controller="channelController">
     <div class="server-info">
-        <h2 class="title">{{host}}</h2>
-        <h5 class="title">{{motd}}</h5>
+        <h2 class="title host-title">{{host}}</h2>
+        <button class="form-button disconnect-button"><i class="fas fa-running"></i> Disconnect</button>
+        <h5 class="title motd">{{motd}}</h5>
     </div>
     <div class="users">
-        <div ng-if="clients.length > 0">
-            <a class="channel-button" ng-repeat="client in clients" href="#!/channel/{{client}}">
-                @{{client}}
+        <div ng-if="channels.length > 0">
+            <a class="channel-button" href="#!/channel/main" ng-disabled="currentChannel.name == 'main'">#main</a>
+            <a class="channel-button" ng-repeat="client in channels" ng-disabled="client.name == currentChannel.name"
+                href="#!/channel/{{client.name}}">
+                @{{client.name}}
             </a>
         </div>
-        <div ng-if="clients.length === 0">
+        <div ng-if="channels.length === 0">
             <p class="text">No user connected</p>
         </div>
+    </div>
+    <div class="channel">
+        <h4 class="title">{{currentChannel.name}}</h4>
+        <div class="messages">
+            <li class="message" ng-repeat="message in currentChannel.messages">
+                <h5 class="title">{{message.author}}</h5>
+                <div class="message-content">
+                    <p class="text-normal">{{message.content}}</p>
+                    <div class="signature-check" ng-if="message.checked"><i style="color: #19b019;"
+                            class="fas fa-check-square"></i>
+                        <p class="hover"><strong>Signature:</strong> {{message.signature}} (valid)</p>
+                    </div>
+                    <div class="signature-check" ng-if="!message.checked"><i style="color: #b02819;"
+                            class="fas fa-times"></i>
+                        <p class="hover"><strong>Signature:</strong> {{message.signature}} (invalid)</p>
+                    </div>
+                </div>
+            </li>
+        </div>
+        <form ng-submit="sendMessage(messageToSend, currentChannel.socketId)">
+            <input ng-model="messageToSend" class="form-input message-send" type="text"
+                placeholder="Message to {{currentChannel.name}}">
+        </form>
     </div>
 </div>

@@ -6247,3 +6247,5 @@ server/node_modules/ws/README.md
 server/package-lock.json
 client/package-lock.json
 client/package-lock.json
+server/node_modules/.package-lock.json
+client/package-lock.json

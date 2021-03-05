@@ -18,8 +18,9 @@ app.get('/', function (req, res) {
 http.listen(port);
 var users = [];
 var online = [];
+var mainKey = randomString(16);
 io.sockets.on('connection', function (socket) {
-  socket.on("connection", function (username, keyHash, publicKey) {
+  socket.on("connection", function (username, keyHash, publicKey, clientKey) {
     var checkDone = 2;
     users.forEach(function (client) {
       if (client.username == username) {
@@ -50,9 +51,9 @@ io.sockets.on('connection', function (socket) {
         }
       });
       if (!alreadyConnected)
-        online.push({ username: username, socketId: socket.id, publicKey: publicKey });
+        online.push({ username: username, socketId: socket.id, publicKey: publicKey, clientKey: clientKey });
+      io.to(socket.id).emit("infos", { motd: motd, mainKey: mainKey });
       io.to(socket.id).emit("clientList", online);
-      io.to(socket.id).emit("motd", motd);
     } else if (checkDone == 2) {
       users.push({ username: username, keyHash: keyHash });
       var alreadyConnected = false;
@@ -62,9 +63,9 @@ io.sockets.on('connection', function (socket) {
         }
       });
       if (!alreadyConnected)
-        online.push({ username: username, socketId: socket.id, publicKey: publicKey });
-      io.to(socket.id).emit("clientList", online);
-      io.to(socket.id).emit("motd", motd);
+        online.push({ username: username, socketId: socket.id, publicKey: publicKey, clientKey: clientKey });
+        io.to(socket.id).emit("infos", { motd: motd, mainKey: mainKey });
+        io.to(socket.id).emit("clientList", online);
     }
   });
   socket.on("message", function (message, signature, receiver) {
@@ -95,3 +96,12 @@ io.sockets.on('connection', function (socket) {
     socket.emit("clientList", online);
   });
 });
+function randomString(length) {
+  var result = '';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for (var i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}

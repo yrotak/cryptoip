@@ -11,7 +11,7 @@ function createWindow () {
         enableRemoteModule: true
     }
   });
-  // mainWindow.removeMenu();
+  //mainWindow.removeMenu();
   mainWindow.loadFile('index.html');
 }
 

@@ -1,7 +1,7 @@
 <div ng-controller="channelController">
     <div class="server-info">
         <h2 class="title host-title">{{host}}</h2>
-        <button class="form-button disconnect-button"><i class="fas fa-running"></i> Disconnect</button>
+        <button class="form-button disconnect-button" ng-click="disconnect()"><i class="fas fa-running"></i> Disconnect</button>
         <h5 class="title motd">{{motd}}</h5>
     </div>
     <div class="users">

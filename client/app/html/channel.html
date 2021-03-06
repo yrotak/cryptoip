@@ -32,6 +32,7 @@
     </div>
     <div class="channel">
         <h4 class="title">{{currentChannel.name}}</h4>
+        <h4 class="title">{{currentChannel.inCall.length}}</h4>
         <div class="messages">
             <li class="message" ng-repeat="message in currentChannel.messages">
                 <h5 class="title">{{message.author}}</h5>

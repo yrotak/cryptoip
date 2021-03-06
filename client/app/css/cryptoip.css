@@ -221,6 +221,7 @@ body, html {
     width: 880px;
     margin-top: 5px;
     background: #131313;
+    overflow-y: scroll;
 }
 .button-calling {
     display: inline;

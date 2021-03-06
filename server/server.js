@@ -15,6 +15,19 @@ var users = [];
 var online = [];
 var secureKey = null;
 var mainKey = randomString(16);
+setInterval(function () {
+  online.forEach(function (client) {
+    console.log(client.warn)
+    console.log(client.actionNumber)
+    if (client.warn > 2) {
+      secureKey = randomString(16);
+      io.to(client.socketId).emit("kick", encrypt("(security bot) - You have 3 warns, please stop!", secureKey), secureKey);
+    }
+    if(client.actionNumber > 0) {
+      client.actionNumber--;
+    }
+  });
+}, 500);
 io.sockets.on('connection', function (socket) {
   socket.on("connection", function (connectionInfos, secureKey) {
     var connectionInfosDecrypt = JSON.parse(decrypt(connectionInfos, secureKey));
@@ -26,7 +39,7 @@ io.sockets.on('connection', function (socket) {
         } else {
           console.log("Kicked " + socket.id);
           secureKey = randomString(16);
-          io.to(socket.id).emit("kick", encrypt("(invalid key hash) - Use your own username, the username is already used", secureKey), secureKey);
+          io.to(socket.id).emit("kick", encrypt("(invalid key hash) - Use your own username, the username is already used!", secureKey), secureKey);
           socket.disconnect();
           checkDone = 3;
         }
@@ -36,7 +49,7 @@ io.sockets.on('connection', function (socket) {
         } else {
           console.log("Kicked " + socket.id);
           secureKey = randomString(16);
-          io.to(socket.id).emit("kick", encryp("(invalid username) - Use your own username, the username is already used", secureKey), secureKey);
+          io.to(socket.id).emit("kick", encrypt("(invalid username) - Use your own username, the username is already used!", secureKey), secureKey);
           socket.disconnect();
           checkDone = 3;
         }
@@ -50,7 +63,7 @@ io.sockets.on('connection', function (socket) {
         }
       });
       if (!alreadyConnected)
-        online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey, clientKey: connectionInfosDecrypt.clientKey });
+        online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey, clientKey: connectionInfosDecrypt.clientKey, actionNumber: 0, warn: 0 });
       secureKey = randomString(16);
       io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), secureKey);
       secureKey = randomString(16);
@@ -64,7 +77,7 @@ io.sockets.on('connection', function (socket) {
         }
       });
       if (!alreadyConnected)
-        online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey, clientKey: connectionInfosDecrypt.clientKey });
+        online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey, clientKey: connectionInfosDecrypt.clientKey, actionNumber: 0, warn: 0 });
       secureKey = randomString(16);
       io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), secureKey);
       secureKey = randomString(16);
@@ -73,6 +86,15 @@ io.sockets.on('connection', function (socket) {
   });
   socket.on("message", function (messageData, secureKey) {
     var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
+    online.forEach(function(client) {
+      if(client.socketId == socket.id) {
+        client.actionNumber++;
+        if(client.actionNumber > 10) {
+          client.actionNumber = 0;
+          client.warn++;
+        }
+      }
+    })
     if (messageDataDecrypt.receiver == "none") {
       var author = "";
       online.forEach(function (user) {

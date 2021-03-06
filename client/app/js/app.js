@@ -74,7 +74,7 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
   $scope.channels = [];
   $scope.host = currentServer;
   var secureKey = randomString(16);
-  socket.emit("connection",encrypt(JSON.stringify({username: username, keyHash: crypto.createHash('sha256').update(passSentence).digest("hex"), publicKey: keyPair.publicKey, clientKey: clientKey}), secureKey), secureKey);
+  socket.emit("connection", encrypt(JSON.stringify({ username: username, keyHash: crypto.createHash('sha256').update(passSentence).digest("hex"), publicKey: keyPair.publicKey, clientKey: clientKey }), secureKey), secureKey);
   socket.on("infos", function (infos, secureKey) {
     var infosDecrypt = JSON.parse(decrypt(infos, secureKey))
     $scope.motd = infosDecrypt.motd;
@@ -102,7 +102,7 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
     socket.disconnect();
     socket = null;
     window.location.href = "#!/";
-    alert(decrypt(reason,secureKey));
+    alert(decrypt(reason, secureKey));
   });
   socket.on("message", function (messageData, secureKey) {
     var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
@@ -115,7 +115,7 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
   });
   $scope.sendMessage = function (message, receiver) {
     secureKey = randomString(16);
-    socket.emit("message", encrypt(JSON.stringify({message: encrypt(message, $scope.currentChannel.clientKey), signature: sign(message, keyPair.privateKey, passSentence),receiver: receiver}), secureKey), secureKey);
+    socket.emit("message", encrypt(JSON.stringify({ message: encrypt(message, $scope.currentChannel.clientKey), signature: sign(message, keyPair.privateKey, passSentence), receiver: receiver }), secureKey), secureKey);
     $scope.messageToSend = null;
   }
   $scope.disconnect = function () {
@@ -123,15 +123,15 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
     socket = null;
     window.location.href = "#!/";
   }
-  $scope.mute = function() {
+  $scope.mute = function () {
     $scope.isMuted = !$scope.isMuted;
     $scope.$apply();
   }
-  $scope.hangup = function() {
+  $scope.hangup = function () {
     $scope.isInCall = false;
     $scope.$apply();
   }
-  $scope.call = function() {
+  $scope.call = function () {
     $scope.isInCall = true;
     $scope.$apply();
   }

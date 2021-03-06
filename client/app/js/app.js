@@ -73,14 +73,17 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
     window.location.href = "#!/";
   $scope.channels = [];
   $scope.host = currentServer;
-  socket.emit("connection", username, crypto.createHash('sha256').update(passSentence).digest("hex"), keyPair.publicKey, clientKey);
-  socket.on("infos", function (infos) {
-    $scope.motd = infos.motd;
-    mainKey = infos.mainKey;
+  var secureKey = randomString(16);
+  socket.emit("connection",encrypt(JSON.stringify({username: username, keyHash: crypto.createHash('sha256').update(passSentence).digest("hex"), publicKey: keyPair.publicKey, clientKey: clientKey}), secureKey), secureKey);
+  socket.on("infos", function (infos, secureKey) {
+    var infosDecrypt = JSON.parse(decrypt(infos, secureKey))
+    $scope.motd = infosDecrypt.motd;
+    mainKey = infosDecrypt.mainKey;
     $scope.$apply();
   });
-  socket.on("clientList", function (clientList) {
-    clientList.forEach(function (client) {
+  socket.on("clientList", function (clientList, secureKey) {
+    clientListDecrypt = JSON.parse(decrypt(clientList, secureKey));
+    clientListDecrypt.forEach(function (client) {
       $scope.channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey });
     });
     $scope.$apply();
@@ -95,22 +98,24 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
       }
     });
   });
-  socket.on("kick", function (reason) {
+  socket.on("kick", function (reason, secureKey) {
     socket.disconnect();
     socket = null;
     window.location.href = "#!/";
-    alert(reason);
+    alert(decrypt(reason,secureKey));
   });
-  socket.on("message", function (message, author, signature) {
-    if (verify(decrypt(message, $scope.currentChannel.clientKey), signature, $scope.currentChannel.publicKey)) {
-      $scope.currentChannel.messages.push({ author: author, content: decrypt(message, $scope.currentChannel.clientKey), signature: signature, checked: true });
+  socket.on("message", function (messageData, secureKey) {
+    var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
+    if (verify(decrypt(messageDataDecrypt.message, $scope.currentChannel.clientKey), messageDataDecrypt.signature, $scope.currentChannel.publicKey)) {
+      $scope.currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, $scope.currentChannel.clientKey), signature: messageDataDecrypt.signature, checked: true });
     } else {
-      $scope.currentChannel.messages.push({ author: author, content: decrypt(message, $scope.currentChannel.clientKey), signature: signature, checked: false });
+      $scope.currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, $scope.currentChannel.clientKey), signature: messageDataDecrypt.signature, checked: false });
     }
     $scope.$apply();
   });
   $scope.sendMessage = function (message, receiver) {
-    socket.emit("message", encrypt(message, $scope.currentChannel.clientKey), sign(message, keyPair.privateKey, passSentence), receiver);
+    secureKey = randomString(16);
+    socket.emit("message", encrypt(JSON.stringify({message: encrypt(message, $scope.currentChannel.clientKey), signature: sign(message, keyPair.privateKey, passSentence),receiver: receiver}), secureKey), secureKey);
     $scope.messageToSend = null;
   }
   $scope.disconnect = function () {
@@ -123,7 +128,6 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
     $scope.$apply();
   }
   $scope.hangup = function() {
-    console.log("grodfsmd fgdsfh; lfjhn hmcgfckljnf:g")
     $scope.isInCall = false;
     $scope.$apply();
   }

@@ -67,6 +67,8 @@ cryptoip.controller("homeController", function ($scope) {
   }
 });
 cryptoip.controller("channelController", function ($scope, $routeParams) {
+  $scope.isInCall = false;
+  $scope.isMuted = false;
   if (socket == null)
     window.location.href = "#!/";
   $scope.channels = [];
@@ -115,6 +117,19 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
     socket.disconnect();
     socket = null;
     window.location.href = "#!/";
+  }
+  $scope.mute = function() {
+    $scope.isMuted = !$scope.isMuted;
+    $scope.$apply();
+  }
+  $scope.hangup = function() {
+    console.log("grodfsmd fgdsfh; lfjhn hmcgfckljnf:g")
+    $scope.isInCall = false;
+    $scope.$apply();
+  }
+  $scope.call = function() {
+    $scope.isInCall = true;
+    $scope.$apply();
   }
 });
 function encrypt(text, password) {

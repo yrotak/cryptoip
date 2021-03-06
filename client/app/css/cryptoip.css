@@ -222,11 +222,18 @@ body, html {
     margin-top: 5px;
     background: #131313;
 }
+.button-calling {
+    display: inline;
+}
 
 .message {
     list-style-type: none;
+    word-break:normal;
     margin-top: 5px;
     margin-bottom: 5px;
+}
+.hangup-button {
+    display: inline;
 }
 
 .signature-check {
@@ -272,8 +279,20 @@ body, html {
     -moz-animation: scroll-left 15s linear infinite;
     -webkit-animation: scroll-left 15s linear infinite;
     animation: scroll-left 15s linear infinite;
+    user-select: none;
 }
-
+.call-button {
+    float: right;
+    margin-right: 10px;
+}
+.call-buttons {
+    float: right;
+    margin-right: 10px;
+    display: inline;
+}
+.button-call {
+    display: inline;
+}
 @-moz-keyframes scroll-left {
     0% {
         -moz-transform: translateX(-100%);

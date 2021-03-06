@@ -2,6 +2,20 @@
     <div class="server-info">
         <h2 class="title host-title">{{host}}</h2>
         <button class="form-button disconnect-button" ng-click="disconnect()"><i class="fas fa-running"></i> Disconnect</button>
+        <div ng-if="isInCall" class="call-buttons">
+            <div ng-click="mute()" ng-if="!isMuted" class="button-call">
+                <i class="fas fa-microphone form-button-outline button-call"></i>
+            </div>
+            <div ng-click="mute()" ng-if="isMuted" class="button-call">
+                <i class="fas fa-microphone-slash form-button-outline button-call"></i>
+            </div>
+            <div class="hangup-button" ng-if="isInCall" ng-click="hangup()">
+                <i class="fas fa-phone-slash form-button-outline button-call"></i>
+            </div>
+        </div>
+        <div ng-if="!isInCall" ng-click="call()" class="button-calling">
+            <i class="fas fa-phone form-button-outline call-button"></i>
+        </div>
         <h5 class="title motd">{{motd}}</h5>
     </div>
     <div class="users">

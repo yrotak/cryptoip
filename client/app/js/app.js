@@ -129,11 +129,25 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
   }
   $scope.hangup = function () {
     $scope.isInCall = false;
-    $scope.$apply();
+    stopRecording();
   }
+  var context = new AudioContext();
+  var sampleRate = 44100;
+  var startAt = 0;
+  socket.on('voice', function (data) {
+    var floats = new Float32Array(data);
+    var source = context.createBufferSource();
+    var buffer = context.createBuffer(1, floats.length, sampleRate);
+    buffer.getChannelData(0).set(floats);
+    source.buffer = buffer;
+    source.connect(context.destination);
+    startAt = Math.max(context.currentTime, startAt);
+    source.start(startAt);
+    startAt += buffer.duration;
+  });
   $scope.call = function () {
     $scope.isInCall = true;
-    $scope.$apply();
+    initRecording();
   }
 });
 function encrypt(text, password) {
@@ -197,3 +211,77 @@ function randomString(length) {
   }
   return result;
 }
+let bufferSize = 2048,
+  context,
+  processor,
+  input,
+  globalStream;
+
+const constraints = {
+  audio: true,
+  video: false,
+};
+
+function initRecording() {
+  var context = new AudioContext({
+    latencyHint: 'interactive',
+    sampleRate: 44100,
+  });
+  processor = context.createScriptProcessor(bufferSize, 1, 1);
+  processor.connect(context.destination);
+  context.resume();
+
+  var handleSuccess = function (stream) {
+    globalStream = stream;
+    input = context.createMediaStreamSource(stream);
+    input.connect(processor);
+
+    processor.onaudioprocess = function (e) {
+      microphoneProcess(e);
+    };
+  };
+
+  navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess);
+}
+
+function microphoneProcess(e) {
+  var left = e.inputBuffer.getChannelData(0);
+  // var left16 = convertFloat32ToInt16(left); // old 32 to 16 function
+  //var left16 = downsampleBuffer(left, 44100, 16000);
+  socket.emit('binaryData', left);
+}
+function stopRecording() {
+  let track = globalStream.getTracks()[0];
+  track.stop();
+  input.disconnect(processor);
+  input = null;
+  processor = null;
+  context = null;
+}
+var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
+  if (outSampleRate == sampleRate) {
+    return buffer;
+  }
+  if (outSampleRate > sampleRate) {
+    throw 'downsampling rate show be smaller than original sample rate';
+  }
+  var sampleRateRatio = sampleRate / outSampleRate;
+  var newLength = Math.round(buffer.length / sampleRateRatio);
+  var result = new Int16Array(newLength);
+  var offsetResult = 0;
+  var offsetBuffer = 0;
+  while (offsetResult < result.length) {
+    var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+    var accum = 0,
+      count = 0;
+    for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+      accum += buffer[i];
+      count++;
+    }
+
+    result[offsetResult] = Math.min(1, accum / count) * 0x7fff;
+    offsetResult++;
+    offsetBuffer = nextOffsetBuffer;
+  }
+  return result.buffer;
+};

@@ -17,13 +17,11 @@ var secureKey = null;
 var mainKey = randomString(16);
 setInterval(function () {
   online.forEach(function (client) {
-    console.log(client.warn)
-    console.log(client.actionNumber)
     if (client.warn > 2) {
       secureKey = randomString(16);
       io.to(client.socketId).emit("kick", encrypt("(security bot) - You have 3 warns, please stop!", secureKey), secureKey);
     }
-    if(client.actionNumber > 0) {
+    if (client.actionNumber > 0) {
       client.actionNumber--;
     }
   });
@@ -86,10 +84,10 @@ io.sockets.on('connection', function (socket) {
   });
   socket.on("message", function (messageData, secureKey) {
     var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
-    online.forEach(function(client) {
-      if(client.socketId == socket.id) {
+    online.forEach(function (client) {
+      if (client.socketId == socket.id) {
         client.actionNumber++;
-        if(client.actionNumber > 10) {
+        if (client.actionNumber > 10) {
           client.actionNumber = 0;
           client.warn++;
         }
@@ -121,6 +119,9 @@ io.sockets.on('connection', function (socket) {
     }
     secureKey = randomString(16);
     socket.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
+  });
+  socket.on("binaryData", function(data) {
+    socket.emit("voice", data);
   });
 });
 function randomString(length) {

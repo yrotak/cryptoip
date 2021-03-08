@@ -132,17 +132,15 @@ cryptoip.controller("channelController", function ($scope, $routeParams) {
     stopRecording();
   }
   var context = new AudioContext();
-  var sampleRate = 44100;
-  var startAt = 0;
   socket.on('voice', function (data) {
     var floats = new Float32Array(data);
     var source = context.createBufferSource();
-    var buffer = context.createBuffer(1, floats.length, sampleRate);
+    var buffer = context.createBuffer(1, floats.length, 44100);
     buffer.getChannelData(0).set(floats);
     source.buffer = buffer;
     source.connect(context.destination);
-    startAt = Math.max(context.currentTime, startAt);
-    source.start(startAt);
+    startAt = Math.max(context.currentTime, 0);
+    source.start(0);
     startAt += buffer.duration;
   });
   $scope.call = function () {
@@ -254,9 +252,9 @@ function stopRecording() {
   let track = globalStream.getTracks()[0];
   track.stop();
   input.disconnect(processor);
+  context = null;
   input = null;
   processor = null;
-  context = null;
 }
 var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
   if (outSampleRate == sampleRate) {

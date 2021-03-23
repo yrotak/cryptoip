@@ -7,6 +7,8 @@ var mainKey = null;
 var currentChannel = null;
 var passSentence = null;
 var channels = [];
+var isInCall = false;
+var muted = false;
 const fs = require('fs');
 const crypto = require('crypto');
 window.$ = window.jQuery = require('./3rdparty/jquery.js');
@@ -38,10 +40,21 @@ $(document).on("click", ".skip-password-btn", function () {
     window.location.reload();
   });
 });
+$(document).on("click", ".disconnect-button", function () {
+  socket.disconnect();
+  clearPages();
+  $(".connectToServer").css("display", "block");
+  socket = null;
+});
 $(document).on("submit", ".sendMessage", function (e) {
   e.preventDefault();
   secureKey = randomString(16);
-  socket.emit("message", encrypt(JSON.stringify({ message: encrypt("miguel", currentChannel.clientKey), signature: sign("miguel", keyPair.privateKey, passSentence), receiver: currentChannel.socketId }), secureKey), secureKey);
+  if(currentChannel.name == "main") {
+    socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId, publicKey: keyPair.publicKey }), secureKey), secureKey);
+  } else {
+    socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId }), secureKey), secureKey);
+  }
+  $(".message-send").val("");
 });
 $(document).on("click", ".setup-password-btn", function () {
   fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()) }), function (err) {
@@ -49,7 +62,20 @@ $(document).on("click", ".setup-password-btn", function () {
     window.location.reload();
   });
 });
-
+$(document).on("click", ".call-btn", function () {
+  isInCall = true;
+  muted = false;
+  initRecording();
+  clearCallButtons();
+  $(".mute-btn").css("display", "inline");
+  $(".hangup-btn").css("display", "inline");
+});
+$(document).on("click", ".hangup-btn", function () {
+  isInCall = false;
+  stopRecording();
+  clearCallButtons();
+  $(".call-btn").css("display", "block");
+});
 $(document).on("click", ".connectToServer-btn", function () {
   socket = io.connect('http://' + $(".host-input").val() + '/');
   keyPair = createKeyPair(passSentence);
@@ -58,6 +84,8 @@ $(document).on("click", ".connectToServer-btn", function () {
   socket.on("connect", () => {
     clientKey = randomString(16);
     clearPages();
+    clearCallButtons();
+    $(".call-btn").css("display", "block");
     $(".serverConnected").css("display", "block");
     $(".host-title").text(currentServer);
     var secureKey = randomString(16);
@@ -69,10 +97,13 @@ $(document).on("click", ".connectToServer-btn", function () {
     });
     socket.on("clientList", function (clientList, secureKey) {
       var clientListDecrypt = JSON.parse(decrypt(clientList, secureKey));
+      console.log(clientListDecrypt);
+      channels = [];
       channels.push({ name: "main", socketId: "none", messages: [], publicKey: [], clientKey: mainKey });
       clientListDecrypt.forEach(function (client) {
         channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey });
       });
+      $(".users").empty();
       channels.forEach(function (channel) {
         if (channel.name == "main") {
           currentChannel = channel;
@@ -94,10 +125,18 @@ $(document).on("click", ".connectToServer-btn", function () {
       var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
       console.log(messageDataDecrypt);
       if (messageDataDecrypt.isMain) {
-        currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: "Main channel no signature check", isMain: messageDataDecrypt.isMain, checked: true });
+        currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
       } else {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
       }
+      $(".messages").empty();
+      currentChannel.messages.forEach((message) => {
+        var color = message.checked ? '#19b019' : '#b02819';
+        var icon = message.checked ? 'check-square' : 'times';
+        var checkResult = message.checked ? 'valid' : 'invalid';
+        var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
+        $(".messages").append($(messageHTML));
+      });
     });
     var context = new AudioContext();
     socket.on('voice', function (data) {
@@ -134,6 +173,7 @@ function switchChannel(channel) {
         if ($($(".channel-button")[channelButton]).attr('channel-name') == channel) {
           $($(".channel-button")[channelButton]).attr('disabled', 'disabled');
           $(".currentChannel-name").text(element.name);
+          $(".message-send").attr('placeholder', 'Message to '+element.name);
           currentChannel = element;
           $(".messages").empty();
           currentChannel.messages.forEach((message) => {
@@ -147,6 +187,13 @@ function switchChannel(channel) {
       });
     }
   });
+}
+
+function clearCallButtons() {
+  $(".mute-btn").css("display", "none");
+  $(".muted-btn").css("display", "none");
+  $(".hangup-btn").css("display", "none");
+  $(".call-btn").css("display", "none");
 }
 
 function clearPages() {

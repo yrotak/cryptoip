@@ -100,7 +100,7 @@ io.sockets.on('connection', function (socket) {
           author = user.username;
         }
       });
-      socket.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true }), secureKey), secureKey);
+      socket.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true, publicKey: messageDataDecrypt.publicKey }), secureKey), secureKey);
     } else {
       var author = "";
       online.forEach(function (user) {

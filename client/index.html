@@ -18,14 +18,13 @@
   <div class="serverConnected">
     <div class="server-info">
       <h2 class="title host-title">-</h2>
-      <button class="form-button disconnect-button"><i class="fas fa-running"></i>
-        Disconnect</button>
+      <button class="form-button disconnect-button"><i class="fas fa-running"></i>Disconnect</button>
       <div class="call-buttons">
-        <button class="form-button-outline button-call"><i class="fas fa-microphone"></i></button>
-        <button class="form-button-outline button-call"><i class="fas fa-microphone-slash"></i></button>
-        <button class="form-button-outline button-call"><i class="fas fa-phone-slash"></i></button>
+        <button class="form-button-outline button-call mute-btn"><i class="fas fa-microphone"></i></button>
+        <button class="form-button-outline button-call muted-btn"><i class="fas fa-microphone-slash"></i></button>
+        <button class="form-button-outline button-call hangup-btn"><i class="fas fa-phone-slash"></i></button>
       </div>
-      <button class="call-button form-button-outline"><i class="fas fa-phone"></i></button>
+      <button class="call-button form-button-outline call-btn"><i class="fas fa-phone"></i></button>
 
       <h5 class="title motd">-</h5>
     </div>
@@ -60,7 +59,8 @@
   </div>
 
   <div class="loginToAccount">
-    <input class="form-input password-input" type="password" ng-model="password">
+    <label class="title">Password</label>
+    <input class="form-input password-input" type="password" maxlength="16" placeholder="e.g 1234">
     <button class="form-button login-btn">Login</button>
   </div>
 
@@ -68,7 +68,7 @@
   <div class="createNewPassSentence">
     <h2 class="title passSentence-title">Pass sentence</h2>
     <h4 class="passSentence">-</h4>
-    <input type="password" class="form-input passSentence-pass" placeholder="e.g 1234">
+    <input type="password" class="form-input passSentence-pass" maxlength="16" placeholder="e.g 1234">
     <div class="inline">
       <button class="form-button-outline skip-password-btn">Skip password</button>
       <button class="form-button setup-password-btn">Setup password</button>

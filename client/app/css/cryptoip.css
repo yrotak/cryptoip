@@ -73,6 +73,7 @@ body, html {
     background: #333333;
     display: block;
     border: none;
+    width: 95%;
     padding: 5px;
     color: #ffffff;
 }
@@ -153,6 +154,9 @@ body, html {
 }
 
 .connectPanel {
+    background: #131313;
+    padding: 15px;
+    border-radius: 4px;
     position: absolute;
     left: 50%;
     top: 40%;
@@ -228,7 +232,15 @@ body, html {
 .button-calling {
     display: inline;
 }
-
+.loginToAccount {
+    background: #131313;
+    border-radius: 4px;
+    margin: 0 auto;
+    margin-top: 250px;
+    padding: 15px;
+    width: 325px;
+    width: 250px;
+}
 .message {
     list-style-type: none;
     word-break:normal;

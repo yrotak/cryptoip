@@ -4,150 +4,158 @@ var username = null;
 var keyPair = null;
 var clientKey = null;
 var mainKey = null;
+var currentChannel = null;
 var passSentence = null;
-const cryptoip = angular.module("cryptoipApp", ["ngRoute"]);
+var channels = [];
 const fs = require('fs');
 const crypto = require('crypto');
-cryptoip.config(["$routeProvider", function ($routeProvider) {
-  $routeProvider
-    .when("/", { templateUrl: "app/html/home.html" })
-    .when("/login/", { templateUrl: "app/html/login.html" })
-    .when("/channel/:channelName", { templateUrl: "app/html/channel.html" })
-    .otherwise({ redirectTo: "/" });
-}]);
-cryptoip.controller("mainController", function ($scope) {
-  $scope.isLoaded = false;
+window.$ = window.jQuery = require('./3rdparty/jquery.js');
+
+$(document).ready(function () {
+  clearPages();
   if (fs.existsSync("config.json")) {
-    $scope.isLoaded = true;
     fs.readFile("config.json", function (err, data) {
       if (err) alert(err);
       if (JSON.parse(data).encrypted == true) {
-        window.location.href = "#!/login/";
+        clearPages();
+        $(".loginToAccount").css("display", "block");
       } else {
-        window.location.href = "#!/";
+        clearPages();
+        $(".connectToServer").css("display", "block");
         passSentence = JSON.parse(data).passsentence;
       }
     });
   } else {
-    $scope.passSentence = createPassSentence().replace(/[-]+/g, " ");
-    passSentence = $scope.passSentence;
-    $scope.setupClient = function (passSentence, usePassword, password) {
-      if (usePassword) {
-        fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, password) }), function (err) {
-          if (err) alert(err);
-          window.location.reload();
-        });
+    passSentence = createPassSentence().replace(/[-]+/g, " ");
+    clearPages();
+    $(".createNewPassSentence").css("display", "block");
+    $(".passSentence").text(passSentence);
+  }
+});
+$(document).on("click", ".skip-password-btn", function () {
+  fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence }), function (err) {
+    if (err) alert(err);
+    window.location.reload();
+  });
+});
+$(document).on("submit", ".sendMessage", function (e) {
+  e.preventDefault();
+  secureKey = randomString(16);
+  socket.emit("message", encrypt(JSON.stringify({ message: encrypt("miguel", currentChannel.clientKey), signature: sign("miguel", keyPair.privateKey, passSentence), receiver: currentChannel.socketId }), secureKey), secureKey);
+});
+$(document).on("click", ".setup-password-btn", function () {
+  fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()) }), function (err) {
+    if (err) alert(err);
+    window.location.reload();
+  });
+});
+
+$(document).on("click", ".connectToServer-btn", function () {
+  socket = io.connect('http://' + $(".host-input").val() + '/');
+  keyPair = createKeyPair(passSentence);
+  username = $(".username-input").val();
+  currentServer = $(".host-input").val();
+  socket.on("connect", () => {
+    clientKey = randomString(16);
+    clearPages();
+    $(".serverConnected").css("display", "block");
+    $(".host-title").text(currentServer);
+    var secureKey = randomString(16);
+    socket.emit("connection", encrypt(JSON.stringify({ username: username, keyHash: crypto.createHash('sha256').update(passSentence).digest("hex"), publicKey: keyPair.publicKey, clientKey: clientKey }), secureKey), secureKey);
+    socket.on("infos", function (infos, secureKey) {
+      var infosDecrypt = JSON.parse(decrypt(infos, secureKey));
+      $(".motd").text(infosDecrypt.motd);
+      mainKey = infosDecrypt.mainKey;
+    });
+    socket.on("clientList", function (clientList, secureKey) {
+      var clientListDecrypt = JSON.parse(decrypt(clientList, secureKey));
+      channels.push({ name: "main", socketId: "none", messages: [], publicKey: [], clientKey: mainKey });
+      clientListDecrypt.forEach(function (client) {
+        channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey });
+      });
+      channels.forEach(function (channel) {
+        if (channel.name == "main") {
+          currentChannel = channel;
+          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "</a>"));
+        } else {
+          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "</a>"));
+        }
+      });
+      switchChannel("main");
+    });
+    socket.on("kick", function (reason, secureKey) {
+      socket.disconnect();
+      socket = null;
+      clearPages();
+      $(".connectToServer").css("display", "block");
+      alert(decrypt(reason, secureKey));
+    });
+    socket.on("message", function (messageData, secureKey) {
+      var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
+      console.log(messageDataDecrypt);
+      if (messageDataDecrypt.isMain) {
+        currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: "Main channel no signature check", isMain: messageDataDecrypt.isMain, checked: true });
       } else {
-        fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence }), function (err) {
-          if (err) alert(err);
-          window.location.reload();
-        });
-      }
-    }
-  }
-  $scope.login = function (password) {
-    fs.readFile("config.json", function (err, data) {
-      if (err) alert(err);
-      $scope.passSentence = decrypt(JSON.parse(data).passsentence, password);
-      passSentence = $scope.passSentence;
-      window.location.href = "#!/";
-    });
-  }
-});
-cryptoip.controller("homeController", function ($scope) {
-  $scope.connect = function (host, user) {
-    socket = io.connect('http://' + host + '/');
-    keyPair = createKeyPair(passSentence);
-    username = user;
-    currentServer = host;
-    socket.on("connect", () => {
-      clientKey = randomString(16);
-      window.location.href = "#!/channel/main";
-    });
-  }
-});
-cryptoip.controller("channelController", function ($scope, $routeParams) {
-  $scope.isInCall = false;
-  $scope.isMuted = false;
-  if (socket == null)
-    window.location.href = "#!/";
-  $scope.channels = [];
-  $scope.host = currentServer;
-  var secureKey = randomString(16);
-  socket.emit("connection", encrypt(JSON.stringify({ username: username, keyHash: crypto.createHash('sha256').update(passSentence).digest("hex"), publicKey: keyPair.publicKey, clientKey: clientKey }), secureKey), secureKey);
-  socket.on("infos", function (infos, secureKey) {
-    var infosDecrypt = JSON.parse(decrypt(infos, secureKey))
-    $scope.motd = infosDecrypt.motd;
-    mainKey = infosDecrypt.mainKey;
-    $scope.$apply();
-  });
-  socket.on("clientList", function (clientList, secureKey) {
-    clientListDecrypt = JSON.parse(decrypt(clientList, secureKey));
-    clientListDecrypt.forEach(function (client) {
-      $scope.channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey });
-    });
-    $scope.$apply();
-    $scope.channels.forEach(function (channel) {
-      console.log(channel);
-      if (channel.name == $routeParams.channelName) {
-        $scope.currentChannel = { name: channel.name, socketId: channel.socketId, messages: [], publicKey: channel.publicKey, clientKey: channel.clientKey };
-        $scope.$apply();
-      } else if ($routeParams.channelName == "main") {
-        $scope.currentChannel = { name: "main", socketId: "none", messages: [], publicKey: channel.publicKey, clientKey: mainKey };
-        $scope.$apply();
+        currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
       }
     });
+    var context = new AudioContext();
+    socket.on('voice', function (data) {
+      var floats = new Float32Array(data);
+      var source = context.createBufferSource();
+      var buffer = context.createBuffer(1, floats.length, 44100);
+      buffer.getChannelData(0).set(floats);
+      source.buffer = buffer;
+      source.connect(context.destination);
+      startAt = Math.max(context.currentTime, 0);
+      source.start(0);
+      startAt += buffer.duration;
+    });
   });
-  socket.on("kick", function (reason, secureKey) {
-    socket.disconnect();
-    socket = null;
-    window.location.href = "#!/";
-    alert(decrypt(reason, secureKey));
-  });
-  socket.on("message", function (messageData, secureKey) {
-    var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
-    if (verify(decrypt(messageDataDecrypt.message, $scope.currentChannel.clientKey), messageDataDecrypt.signature, $scope.currentChannel.publicKey)) {
-      $scope.currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, $scope.currentChannel.clientKey), signature: messageDataDecrypt.signature, checked: true });
-    } else {
-      $scope.currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, $scope.currentChannel.clientKey), signature: messageDataDecrypt.signature, checked: false });
-    }
-    $scope.$apply();
-  });
-  $scope.sendMessage = function (message, receiver) {
-    secureKey = randomString(16);
-    socket.emit("message", encrypt(JSON.stringify({ message: encrypt(message, $scope.currentChannel.clientKey), signature: sign(message, keyPair.privateKey, passSentence), receiver: receiver }), secureKey), secureKey);
-    $scope.messageToSend = null;
-  }
-  $scope.disconnect = function () {
-    socket.disconnect();
-    socket = null;
-    window.location.href = "#!/";
-  }
-  $scope.mute = function () {
-    $scope.isMuted = !$scope.isMuted;
-    $scope.$apply();
-  }
-  $scope.hangup = function () {
-    $scope.isInCall = false;
-    stopRecording();
-  }
-  var context = new AudioContext();
-  socket.on('voice', function (data) {
-    var floats = new Float32Array(data);
-    var source = context.createBufferSource();
-    var buffer = context.createBuffer(1, floats.length, 44100);
-    buffer.getChannelData(0).set(floats);
-    source.buffer = buffer;
-    source.connect(context.destination);
-    startAt = Math.max(context.currentTime, 0);
-    source.start(0);
-    startAt += buffer.duration;
-  });
-  $scope.call = function () {
-    $scope.isInCall = true;
-    initRecording();
-  }
 });
+// secureKey = randomString(16);
+//     socket.emit("message", encrypt(JSON.stringify({ message: encrypt(message, $scope.currentChannel.clientKey), signature: sign(message, keyPair.privateKey, passSentence), receiver: receiver }), secureKey), secureKey);
+$(document).on("click", ".login-btn", function () {
+  fs.readFile("config.json", function (err, data) {
+    if (err) alert(err);
+    passSentence = decrypt(JSON.parse(data).passsentence, $(".password-input").val());
+    clearPages();
+    $(".connectToServer").css("display", "block");
+  });
+});
+$(document).on("click", ".channel-button", function () {
+  switchChannel($(this).attr('channel-name'));
+});
+function switchChannel(channel) {
+  channels.forEach((element) => {
+    if (element.name == channel) {
+      $(".channel-button").each((channelButton) => {
+        $($(".channel-button")[channelButton]).removeAttr("disabled");
+        if ($($(".channel-button")[channelButton]).attr('channel-name') == channel) {
+          $($(".channel-button")[channelButton]).attr('disabled', 'disabled');
+          $(".currentChannel-name").text(element.name);
+          currentChannel = element;
+          $(".messages").empty();
+          currentChannel.messages.forEach((message) => {
+            var color = message.checked ? '#19b019' : '#b02819';
+            var icon = message.checked ? 'check-square' : 'times';
+            var checkResult = message.checked ? 'valid' : 'invalid';
+            var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
+            $(".messages").append($(messageHTML));
+          });
+        }
+      });
+    }
+  });
+}
+
+function clearPages() {
+  $(".connectToServer").css("display", "none");
+  $(".serverConnected").css("display", "none");
+  $(".createNewPassSentence").css("display", "none");
+  $(".loginToAccount").css("display", "none");
+}
+
 function encrypt(text, password) {
   var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
   var crypted = cipher.update(text, 'utf8', 'hex')

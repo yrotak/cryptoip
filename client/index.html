@@ -8,34 +8,76 @@
   <link rel="stylesheet" href="3rdparty/all.min.css">
   <link rel="stylesheet" href="app/css/cryptoip.css">
 </head>
-
-<body>
-  <div ng-app="cryptoipApp">
-    <div ng-controller="mainController">
-      <div class="loading" ng-show="loading"></div>
-      <div ng-if="isLoaded">
-        <div ng-view></div>
-      </div>
-      <div ng-if="!isLoaded" class="createNewPassSentence">
-        <h2 class="title passSentence-title">Pass sentence</h2>
-        <h4 class="passSentence">{{passSentence}}</h4>
-        <input type="password" class="form-input passSentence-pass" ng-model="code" placeholder="e.g 1234">
-        <div class="inline">
-          <button class="form-button-outline" ng-click="setupClient(passSentence, false, null)">Skip password</button>
-          <button class="form-button" ng-click="setupClient(passSentence, true, code)">Setup password</button>
-        </div>
-        <p class="text passSentence-ps">PS: If you create a password and forget it there is no way to get back your pass sentence</p>
-      </div>
-    </div>
-  </div>
-</body>
-<script src="3rdparty/angular.min.js"></script>
-<script src="3rdparty/angular-route.min.js"></script>
-<script src="3rdparty/all.min.js"></script>
 <script src="3rdparty/socket.io.min.js"></script>
-<script src="3rdparty/socket.io-stream.min.js"></script>
+<script src="3rdparty/all.min.js"></script>
 <script src="app/js/aes.js"></script>
 <script src="app/js/crypto.js"></script>
 <script src="app/js/app.js"></script>
+
+<body>
+  <div class="serverConnected">
+    <div class="server-info">
+      <h2 class="title host-title">-</h2>
+      <button class="form-button disconnect-button"><i class="fas fa-running"></i>
+        Disconnect</button>
+      <div class="call-buttons">
+        <button class="form-button-outline button-call"><i class="fas fa-microphone"></i></button>
+        <button class="form-button-outline button-call"><i class="fas fa-microphone-slash"></i></button>
+        <button class="form-button-outline button-call"><i class="fas fa-phone-slash"></i></button>
+      </div>
+      <button class="call-button form-button-outline"><i class="fas fa-phone"></i></button>
+
+      <h5 class="title motd">-</h5>
+    </div>
+
+
+    <div class="users">
+    </div>
+
+
+    <div class="channel">
+      <h4 class="title currentChannel-name">-</h4>
+      <div class="messages">
+      </div>
+      <form class="sendMessage">
+        <input class="form-input message-send" type="text"
+          placeholder="Message to -">
+      </form>
+    </div>
+  </div>
+
+  <div class="connectToServer">
+    <div class="connectPanel">
+      <h2 class="title">Connect to a server</h2>
+      <label class="title">Username (use your own)</label>
+      <input type="text" class="form-input username-input" placeholder="e.g dimitri">
+      <label class="title">Host</label>
+      <input type="text" class="form-input host-input" placeholder="e.g 127.0.0.1:3000">
+      <div class="connect">
+        <button class="form-button connectToServer-btn">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loginToAccount">
+    <input class="form-input password-input" type="password" ng-model="password">
+    <button class="form-button login-btn">Login</button>
+  </div>
+
+  <!-- CREATE NEW PASS SENTENCE -->
+  <div class="createNewPassSentence">
+    <h2 class="title passSentence-title">Pass sentence</h2>
+    <h4 class="passSentence">-</h4>
+    <input type="password" class="form-input passSentence-pass" placeholder="e.g 1234">
+    <div class="inline">
+      <button class="form-button-outline skip-password-btn">Skip password</button>
+      <button class="form-button setup-password-btn">Setup password</button>
+    </div>
+    <p class="text passSentence-ps">PS: If you create a password and forget it there is no way to get back your pass
+      sentence</p>
+  </div>
+
+
+</body>
 
 </html>

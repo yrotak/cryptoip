@@ -92,7 +92,7 @@ io.sockets.on('connection', function (socket) {
           client.warn++;
         }
       }
-    })
+    });
     if (messageDataDecrypt.receiver == "none") {
       var author = "";
       online.forEach(function (user) {
@@ -100,7 +100,7 @@ io.sockets.on('connection', function (socket) {
           author = user.username;
         }
       });
-      socket.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature }), secureKey), secureKey);
+      socket.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true }), secureKey), secureKey);
     } else {
       var author = "";
       online.forEach(function (user) {
@@ -108,7 +108,7 @@ io.sockets.on('connection', function (socket) {
           author = user.username;
         }
       });
-      io.to(messageDataDecrypt.receiver).emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature }), secureKey), secureKey);
+      io.to(messageDataDecrypt.receiver).emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: false }), secureKey), secureKey);
     }
   });
   socket.on("disconnect", function () {

@@ -276,7 +276,7 @@ const constraints = {
 };
 
 function initRecording() {
-  var context = new AudioContext({
+  context = new AudioContext({
     latencyHint: 'interactive',
     sampleRate: 44100,
   });
@@ -304,12 +304,12 @@ function microphoneProcess(e) {
   socket.emit('binaryData', left);
 }
 function stopRecording() {
-  let track = globalStream.getTracks()[0];
-  track.stop();
   input.disconnect(processor);
-  context = null;
-  input = null;
+  processor.disconnect();
   processor = null;
+  globalStream = null;
+  input = null;
+  context = null;
 }
 var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
   if (outSampleRate == sampleRate) {

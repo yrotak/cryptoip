@@ -122,6 +122,7 @@ io.sockets.on('connection', function (socket) {
   });
   socket.on("binaryData", function(data) {
     socket.emit("voice", data);
+    //socket.broadcast.emit('voice', data);
   });
 });
 function randomString(length) {

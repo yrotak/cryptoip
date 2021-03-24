@@ -141,6 +141,7 @@ $(document).on("click", ".connectToServer-btn", function () {
     var context = new AudioContext();
     socket.on('voice', function (data) {
       var floats = new Float32Array(data);
+      console.log(floats.length);
       var source = context.createBufferSource();
       var buffer = context.createBuffer(1, floats.length, 44100);
       buffer.getChannelData(0).set(floats);

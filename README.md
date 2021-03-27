@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo/cryptoipComplexBack.png" />
+  <img width="256" height="256" src="logo/cryptoipComplexBack.png" />
 </p>
 
 > VOIP Client / Server

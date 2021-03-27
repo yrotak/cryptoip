@@ -1,6 +1,4 @@
-<div style="width: 30%; margin: 0 auto;"><img src="logo/cryptoipComplexBack.png" /></div>
-[![Build
-Status](https://github.com/DrayNeur/cryptoip/releases)](https://github.com/DrayNeur/cryptoip/releases)
+<div style="width: 25vw; margin: 0 auto;"><img src="logo/cryptoipComplexBack.png" /></div>
 
 > VOIP Client / Server
 > Language: NodeJS

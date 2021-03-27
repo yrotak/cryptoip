@@ -1,7 +1,7 @@
 <p align="center">
   <img width="256" height="256" src="logo/cryptoipComplexBack.png" />
 </p>
-[![Build Status](https://github.com/ocornut/imgui/workflows/build/badge.svg)](https://github.com/DrayNeur/cryptoip/actions?workflow=build) [![Static Analysis Status](https://github.com/DrayNeur/cryptoip/workflows/static-analysis/badge.svg)](https://github.com/DrayNeur/cryptoip/actions?workflow=static-analysis)
+[Releases](https://github.com/DrayNeur/cryptoip/releases)
 
 > VOIP Client / Server
 > Language: NodeJS

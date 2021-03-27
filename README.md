@@ -1,4 +1,4 @@
-<div style="width: 25vw; margin: 0 auto;"><img src="logo/cryptoipComplexBack.png" /></div>
+<div style="width: 250px; margin: 0 auto;"><img src="logo/cryptoipComplexBack.png" /></div>
 
 > VOIP Client / Server
 > Language: NodeJS

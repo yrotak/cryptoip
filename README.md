@@ -2,8 +2,10 @@
   <img width="256" height="256" src="logo/cryptoipComplexBack.png" />
 </p>
 
-[Releases](https://github.com/DrayNeur/cryptoip/releases)
+<p align="center>
 
+[Releases](https://github.com/DrayNeur/cryptoip/releases)
+</p>
 
 > VOIP Client / Server <br>
 > Language: NodeJS

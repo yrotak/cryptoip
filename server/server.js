@@ -66,6 +66,7 @@ io.sockets.on('connection', function (socket) {
       io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), secureKey);
       secureKey = randomString(16);
       io.to(socket.id).emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
+      socket.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
     } else if (checkDone == 2) {
       users.push({ username: connectionInfosDecrypt.username, keyHash: connectionInfosDecrypt.keyHash });
       var alreadyConnected = false;

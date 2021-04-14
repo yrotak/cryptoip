@@ -1,17 +1,19 @@
-# cryptoip
-> VOIP Client / Server in nodeJs(electron) encrypted in AES and xor
-#### Current version 1.4
-using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](https://github.com/wader)
-<br>
-### Requirement:
+<p align="center">
+  <img width="256" height="256" src="logo/cryptoipComplexBack.png" />
+</p>
 
-#### Server
+[Releases](https://github.com/DrayNeur/cryptoip/releases)
+
+> VOIP Client / Server <br>
+> Language: NodeJS
+<br>
+
+### Libraries:
 - express
 - http
 - socket.io
-#### Client
 - electron
-- socket.io
+- crypto
 
 ### Features:
 - Real time voip
@@ -19,5 +21,8 @@ using [aes-arraybuffer](https://github.com/wader/aes-arraybuffer) by [wader](htt
 - GUI with electron JS
 - Server can handle mutliple clients
 - Good voice quality
-- Chat encrypted with xor cipher
-- XSS protection
+- Chat encrypted with AES 128
+- Voice stream encrypted with AES 128
+- Private messages
+- Unique username
+- Signature check

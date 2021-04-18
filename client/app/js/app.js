@@ -44,7 +44,7 @@ $(document).on("click", ".fav-server", function () {
   $(".host-input").val($(this).text());
 });
 $(document).on("click", ".skip-password-btn", function () {
-  fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence, username: null }), function (err) {
+  fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence, username: null, servers: [] }), function (err) {
     if (err) alert(err);
     window.location.reload();
   });
@@ -75,7 +75,7 @@ $(document).on("submit", ".sendMessage", function (e) {
   $(".message-send").val("");
 });
 $(document).on("click", ".setup-password-btn", function () {
-  fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()), username: null }), function (err) {
+  fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()), username: null, servers: [] }), function (err) {
     if (err) alert(err);
     window.location.reload();
   });

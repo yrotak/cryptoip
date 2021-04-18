@@ -18,6 +18,12 @@ $(document).ready(function () {
   if (fs.existsSync("config.json")) {
     fs.readFile("config.json", function (err, data) {
       if (err) alert(err);
+      $(".username-input").val(JSON.parse(data).username);
+      $(".serverList").empty();
+
+      JSON.parse(data).servers.forEach((server) => {
+        $(".serverList").append($('<a class="fav-server">'+server+'</a>'));
+      });
       if (JSON.parse(data).encrypted == true) {
         clearPages();
         $(".loginToAccount").css("display", "block");
@@ -34,8 +40,11 @@ $(document).ready(function () {
     $(".passSentence").text(passSentence);
   }
 });
+$(document).on("click", ".fav-server", function () {
+  $(".host-input").val($(this).text());
+});
 $(document).on("click", ".skip-password-btn", function () {
-  fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence }), function (err) {
+  fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence, username: null }), function (err) {
     if (err) alert(err);
     window.location.reload();
   });
@@ -49,7 +58,7 @@ $(document).on("click", ".disconnect-button", function () {
 $(document).on("submit", ".sendMessage", function (e) {
   e.preventDefault();
   secureKey = randomString(16);
-  if(currentChannel.name == "main") {
+  if (currentChannel.name == "main") {
     socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId, publicKey: keyPair.publicKey }), secureKey), secureKey);
   } else {
     socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId }), secureKey), secureKey);
@@ -57,7 +66,7 @@ $(document).on("submit", ".sendMessage", function (e) {
   $(".message-send").val("");
 });
 $(document).on("click", ".setup-password-btn", function () {
-  fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()) }), function (err) {
+  fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()), username: null }), function (err) {
     if (err) alert(err);
     window.location.reload();
   });
@@ -81,6 +90,12 @@ $(document).on("click", ".connectToServer-btn", function () {
   keyPair = createKeyPair(passSentence);
   username = $(".username-input").val();
   currentServer = $(".host-input").val();
+  var config = JSON.parse(fs.readFileSync("config.json"));
+  config.username = username;
+  if(config.servers.indexOf(currentServer)) {
+    config.servers.push(currentServer);
+  }
+  fs.writeFileSync("config.json", JSON.stringify(config));
   socket.on("connect", () => {
     clientKey = randomString(16);
     clearPages();
@@ -130,6 +145,7 @@ $(document).on("click", ".connectToServer-btn", function () {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
       }
       $(".messages").empty();
+
       currentChannel.messages.forEach((message) => {
         var color = message.checked ? '#19b019' : '#b02819';
         var icon = message.checked ? 'check-square' : 'times';
@@ -174,7 +190,7 @@ function switchChannel(channel) {
         if ($($(".channel-button")[channelButton]).attr('channel-name') == channel) {
           $($(".channel-button")[channelButton]).attr('disabled', 'disabled');
           $(".currentChannel-name").text(element.name);
-          $(".message-send").attr('placeholder', 'Message to '+element.name);
+          $(".message-send").attr('placeholder', 'Message to ' + element.name);
           currentChannel = element;
           $(".messages").empty();
           currentChannel.messages.forEach((message) => {

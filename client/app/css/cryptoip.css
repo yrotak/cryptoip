@@ -308,6 +308,16 @@ body, html {
 .button-call {
     display: inline;
 }
+.fav-server {
+    color: #EEEEFF;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.fav-server:hover {
+    opacity: 0.8;
+    transition: 0.2s;
+}
 @-moz-keyframes scroll-left {
     0% {
         -moz-transform: translateX(-100%);

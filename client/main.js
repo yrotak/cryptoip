@@ -5,7 +5,7 @@ function createWindow () {
     width: 1080,
     height: 720,
     resizable: false,
-    icon: __dirname + '/icon.ico',
+    icon: __dirname + '/favicon.ico',
     webPreferences: {
         nodeIntegration: true,
         enableRemoteModule: true

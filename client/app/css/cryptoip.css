@@ -310,6 +310,7 @@ body, html {
 }
 .fav-server {
     color: #EEEEFF;
+    display: block;
     text-decoration: none;
     cursor: pointer;
     transition: 0.2s;

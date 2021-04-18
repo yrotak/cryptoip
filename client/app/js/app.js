@@ -101,9 +101,8 @@ $(document).on("click", ".connectToServer-btn", function () {
   currentServer = $(".host-input").val();
   var config = JSON.parse(fs.readFileSync("config.json"));
   config.username = username;
-  if(config.servers.indexOf(currentServer)) {
-    config.servers.push(currentServer);
-  }
+  config.servers.push(currentServer);
+  config.servers = getUnique(config.servers);
   fs.writeFileSync("config.json", JSON.stringify(config));
   socket.on("connect", () => {
     clientKey = randomString(16);
@@ -170,7 +169,6 @@ $(document).on("click", ".connectToServer-btn", function () {
     var context = new AudioContext();
     socket.on('voice', function (data) {
       var floats = new Float32Array(data);
-      console.log(floats.length);
       var source = context.createBufferSource();
       var buffer = context.createBuffer(1, floats.length, 44100);
       buffer.getChannelData(0).set(floats);
@@ -368,3 +366,10 @@ var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
   }
   return result.buffer;
 };
+function getUnique(array){
+  var uniqueArray = [];
+  for(i=0; i < array.length; i++)
+      if(uniqueArray.indexOf(array[i]) === -1)
+          uniqueArray.push(array[i]);
+  return uniqueArray;
+}

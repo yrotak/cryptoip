@@ -47,12 +47,21 @@ $(document).on("click", ".disconnect-button", function () {
   socket = null;
 });
 $(document).on("submit", ".sendMessage", function (e) {
+  currentChannel.messages.push({ author: username, content: $(".message-send").val(), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), isMain: currentChannel.name == "main", checked: verify($(".message-send").val(), sign($(".message-send").val(), keyPair.privateKey, passSentence), keyPair.publicKey) });
+  $(".messages").empty();
+  currentChannel.messages.forEach((message) => {
+    var color = message.checked ? '#19b019' : '#b02819';
+    var icon = message.checked ? 'check-square' : 'times';
+    var checkResult = message.checked ? 'valid' : 'invalid';
+    var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
+    $(".messages").append($(messageHTML));
+  });
   e.preventDefault();
   secureKey = randomString(16);
   if(currentChannel.name == "main") {
     socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId, publicKey: keyPair.publicKey }), secureKey), secureKey);
   } else {
-    socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId }), secureKey), secureKey);
+    socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId }), secureKey), secureKey);
   }
   $(".message-send").val("");
 });
@@ -109,7 +118,9 @@ $(document).on("click", ".connectToServer-btn", function () {
           currentChannel = channel;
           $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "</a>"));
         } else {
-          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "</a>"));
+          if(channel.name != username){
+            $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "</a>"));
+          }
         }
       });
       switchChannel("main");
@@ -127,6 +138,8 @@ $(document).on("click", ".connectToServer-btn", function () {
       if (messageDataDecrypt.isMain) {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
       } else {
+        console.log(currentChannel.clientKey);
+        console.log(clientKey);
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
       }
       $(".messages").empty();

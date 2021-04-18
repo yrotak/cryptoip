@@ -66,7 +66,7 @@ io.sockets.on('connection', function (socket) {
       io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), secureKey);
       secureKey = randomString(16);
       io.to(socket.id).emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
-      socket.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
+      socket.broadcast.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
     } else if (checkDone == 2) {
       users.push({ username: connectionInfosDecrypt.username, keyHash: connectionInfosDecrypt.keyHash });
       var alreadyConnected = false;
@@ -81,6 +81,7 @@ io.sockets.on('connection', function (socket) {
       io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), secureKey);
       secureKey = randomString(16);
       io.to(socket.id).emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
+      socket.broadcast.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
     }
   });
   socket.on("message", function (messageData, secureKey) {
@@ -101,7 +102,7 @@ io.sockets.on('connection', function (socket) {
           author = user.username;
         }
       });
-      socket.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true, publicKey: messageDataDecrypt.publicKey }), secureKey), secureKey);
+      socket.broadcast.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true, publicKey: messageDataDecrypt.publicKey }), secureKey), secureKey);
     } else {
       var author = "";
       online.forEach(function (user) {
@@ -119,7 +120,7 @@ io.sockets.on('connection', function (socket) {
       }
     }
     secureKey = randomString(16);
-    socket.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
+    socket.broadcast.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
   });
   socket.on("binaryData", function(data) {
     //socket.emit("voice", data);

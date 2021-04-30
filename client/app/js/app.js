@@ -183,9 +183,11 @@ $(document).on("click", ".connectToServer-btn", function () {
       if (messageDataDecrypt.isMain) {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
       } else {
-        console.log(currentChannel.clientKey);
-        console.log(clientKey);
-        currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
+        channels.forEach((channel) => {
+          if(channel.name == messageDataDecrypt.author) {
+            currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
+          }
+        });
       }
       $(".messages").empty();
 

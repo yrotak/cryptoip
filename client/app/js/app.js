@@ -169,6 +169,18 @@ $(document).on("click", ".connectToServer-btn", function () {
         }
       });
       switchChannel("main");
+      //var messagesData = decrypt(fs.readFileSync("data.bin"), crypto.createHash('sha256').update(passSentence).digest("hex"));
+      var messageData = JSON.parse(fs.readFileSync("data.bin"));
+      if (messageData[currentServer] != undefined && messageData[currentServer] != null) {
+        for (var i = 0; i < channels.length; i++) {
+          if (messageData[currentServer].findIndex(p => p.name == channels[i].name) != -1) {
+            channels[i].messages = messageData[currentServer][messageData[currentServer].findIndex(p => p.name == channels[i].name)].messages;
+          }
+        }
+      } else {
+        messageData[currentServer] = [];
+        fs.writeFileSync("data.bin", JSON.stringify(messageData));
+      }
     });
     socket.on("kick", function (reason, secureKey) {
       socket.disconnect();
@@ -182,11 +194,29 @@ $(document).on("click", ".connectToServer-btn", function () {
       console.log(messageDataDecrypt);
       if (messageDataDecrypt.isMain) {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
+        var messageData = JSON.parse(fs.readFileSync("data.bin"));
+        for (var i = 0; i < messageData[currentServer].length; i++) {
+          if (messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author) != -1) {
+            messageData[currentServer][messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
+          } else {
+            messageData[currentServer].push(channels[0]);
+          }
+        }
+        fs.writeFileSync("data.bin", JSON.stringify(messageData));
       } else {
         for (var i = 0; i < channels.length; i++) {
           if (channels[i].name == messageDataDecrypt.author) {
             console.log(channels[i]);
             channels[i].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
+            var messageData = JSON.parse(fs.readFileSync("data.bin"));
+            for (var i = 0; i < messageData[currentServer].length; i++) {
+            //   if (messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author) != -1) {
+            //     messageData[currentServer][messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
+            //   } else {
+            //     messageData[currentServer].push(channels[i]);
+            //   }
+            }
+            fs.writeFileSync("data.bin", JSON.stringify(messageData));
           }
         }
       }

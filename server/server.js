@@ -122,7 +122,7 @@ io.sockets.on('connection', function (socket) {
     secureKey = randomString(16);
     socket.broadcast.emit("clientList", encrypt(JSON.stringify(online), secureKey), secureKey);
   });
-  socket.on("binaryData", function(data) {
+  socket.on("radio", function(data) {
     //socket.emit("voice", data);
     socket.broadcast.emit('voice', data);
   });

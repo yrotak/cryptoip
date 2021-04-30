@@ -9,6 +9,7 @@ var passSentence = null;
 var channels = [];
 var isInCall = false;
 var muted = false;
+var callThread = null;
 const fs = require('fs');
 const crypto = require('crypto');
 window.$ = window.jQuery = require('./3rdparty/jquery.js');
@@ -22,7 +23,7 @@ $(document).ready(function () {
       $(".serverList").empty();
 
       JSON.parse(data).servers.forEach((server) => {
-        $(".serverList").append($('<a class="fav-server">'+server+'</a>'));
+        $(".serverList").append($('<a class="fav-server">' + server + '</a>'));
       });
       if (JSON.parse(data).encrypted == true) {
         clearPages();
@@ -83,14 +84,44 @@ $(document).on("click", ".setup-password-btn", function () {
 $(document).on("click", ".call-btn", function () {
   isInCall = true;
   muted = false;
-  initRecording();
+  //initRecording();
+  var constraints = {
+    audio: true
+  };
+  navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
+    var mediaRecorder = new MediaRecorder(mediaStream);
+    mediaRecorder.onstart = function (e) {
+      this.chunks = [];
+    };
+    mediaRecorder.ondataavailable = function (e) {
+      this.chunks.push(e.data);
+    };
+    mediaRecorder.onstop = function (e) {
+      var blob = new Blob(this.chunks, {
+        'type': 'audio/webm; codecs=opus'
+      });
+      var enc = new TextEncoder();
+      if (!muted && isInCall) {
+        blob.arrayBuffer().then(array => socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(mainKey).buffer, enc.encode(mainKey).buffer)));
+      }
+    };
+    callThread = setInterval(() => {
+      if (mediaRecorder.state != "recording") {
+        mediaRecorder.start();
+        setTimeout(() => {
+          mediaRecorder.stop();
+        }, 450);
+      }
+    }, 10);
+  });
   clearCallButtons();
   $(".mute-btn").css("display", "inline");
   $(".hangup-btn").css("display", "inline");
 });
 $(document).on("click", ".hangup-btn", function () {
   isInCall = false;
-  stopRecording();
+  muted = false;
+  clearInterval(callThread);
   clearCallButtons();
   $(".call-btn").css("display", "block");
 });
@@ -132,7 +163,7 @@ $(document).on("click", ".connectToServer-btn", function () {
           currentChannel = channel;
           $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "</a>"));
         } else {
-          if(channel.name != username){
+          if (channel.name != username) {
             $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "</a>"));
           }
         }
@@ -166,17 +197,24 @@ $(document).on("click", ".connectToServer-btn", function () {
         $(".messages").append($(messageHTML));
       });
     });
-    var context = new AudioContext();
+    // var context = new AudioContext();
     socket.on('voice', function (data) {
-      var floats = new Float32Array(data);
-      var source = context.createBufferSource();
-      var buffer = context.createBuffer(1, floats.length, 44100);
-      buffer.getChannelData(0).set(floats);
-      source.buffer = buffer;
-      source.connect(context.destination);
-      startAt = Math.max(context.currentTime, 0);
-      source.start(0);
-      startAt += buffer.duration;
+      // var floats = new Float32Array(data);
+      // var source = context.createBufferSource();
+      // var buffer = context.createBuffer(1, floats.length, 44100);
+      // buffer.getChannelData(0).set(floats);
+      // source.buffer = buffer;
+      // source.connect(context.destination);
+      // startAt = Math.max(context.currentTime, 0);
+      // source.start(0);
+      // startAt += buffer.duration;
+      var enc = new TextEncoder();
+      var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(mainKey).buffer, enc.encode(mainKey).buffer))], {
+        'type': 'audio/webm; codecs=opus'
+      });
+      var audio = document.createElement('audio');
+      audio.src = window.URL.createObjectURL(blob);
+      audio.play();
     });
   });
 });
@@ -292,84 +330,84 @@ function randomString(length) {
   }
   return result;
 }
-let bufferSize = 2048,
-  context,
-  processor,
-  input,
-  globalStream;
+// let bufferSize = 2048,
+//   context,
+//   processor,
+//   input,
+//   globalStream;
 
-const constraints = {
-  audio: true,
-  video: false,
-};
+// const constraints = {
+//   audio: true,
+//   video: false,
+// };
 
-function initRecording() {
-  context = new AudioContext({
-    latencyHint: 'interactive',
-    sampleRate: 44100,
-  });
-  processor = context.createScriptProcessor(bufferSize, 1, 1);
-  processor.connect(context.destination);
-  context.resume();
+// function initRecording() {
+//   context = new AudioContext({
+//     latencyHint: 'interactive',
+//     sampleRate: 44100,
+//   });
+//   processor = context.createScriptProcessor(bufferSize, 1, 1);
+//   processor.connect(context.destination);
+//   context.resume();
 
-  var handleSuccess = function (stream) {
-    globalStream = stream;
-    input = context.createMediaStreamSource(stream);
-    input.connect(processor);
+//   var handleSuccess = function (stream) {
+//     globalStream = stream;
+//     input = context.createMediaStreamSource(stream);
+//     input.connect(processor);
 
-    processor.onaudioprocess = function (e) {
-      microphoneProcess(e);
-    };
-  };
+//     processor.onaudioprocess = function (e) {
+//       microphoneProcess(e);
+//     };
+//   };
 
-  navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess);
-}
+//   navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess);
+// }
 
-function microphoneProcess(e) {
-  var left = e.inputBuffer.getChannelData(0);
-  // var left16 = convertFloat32ToInt16(left); // old 32 to 16 function
-  //var left16 = downsampleBuffer(left, 44100, 16000);
-  socket.emit('binaryData', left);
-}
-function stopRecording() {
-  input.disconnect(processor);
-  processor.disconnect();
-  processor = null;
-  globalStream = null;
-  input = null;
-  context = null;
-}
-var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
-  if (outSampleRate == sampleRate) {
-    return buffer;
-  }
-  if (outSampleRate > sampleRate) {
-    throw 'downsampling rate show be smaller than original sample rate';
-  }
-  var sampleRateRatio = sampleRate / outSampleRate;
-  var newLength = Math.round(buffer.length / sampleRateRatio);
-  var result = new Int16Array(newLength);
-  var offsetResult = 0;
-  var offsetBuffer = 0;
-  while (offsetResult < result.length) {
-    var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
-    var accum = 0,
-      count = 0;
-    for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
-      accum += buffer[i];
-      count++;
-    }
+// function microphoneProcess(e) {
+//   var left = e.inputBuffer.getChannelData(0);
+//   // var left16 = convertFloat32ToInt16(left); // old 32 to 16 function
+//   //var left16 = downsampleBuffer(left, 44100, 16000);
+//   socket.emit('binaryData', left);
+// }
+// function stopRecording() {
+//   input.disconnect(processor);
+//   processor.disconnect();
+//   processor = null;
+//   globalStream = null;
+//   input = null;
+//   context = null;
+// }
+// var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
+//   if (outSampleRate == sampleRate) {
+//     return buffer;
+//   }
+//   if (outSampleRate > sampleRate) {
+//     throw 'downsampling rate show be smaller than original sample rate';
+//   }
+//   var sampleRateRatio = sampleRate / outSampleRate;
+//   var newLength = Math.round(buffer.length / sampleRateRatio);
+//   var result = new Int16Array(newLength);
+//   var offsetResult = 0;
+//   var offsetBuffer = 0;
+//   while (offsetResult < result.length) {
+//     var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+//     var accum = 0,
+//       count = 0;
+//     for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+//       accum += buffer[i];
+//       count++;
+//     }
 
-    result[offsetResult] = Math.min(1, accum / count) * 0x7fff;
-    offsetResult++;
-    offsetBuffer = nextOffsetBuffer;
-  }
-  return result.buffer;
-};
-function getUnique(array){
+//     result[offsetResult] = Math.min(1, accum / count) * 0x7fff;
+//     offsetResult++;
+//     offsetBuffer = nextOffsetBuffer;
+//   }
+//   return result.buffer;
+// };
+function getUnique(array) {
   var uniqueArray = [];
-  for(i=0; i < array.length; i++)
-      if(uniqueArray.indexOf(array[i]) === -1)
-          uniqueArray.push(array[i]);
+  for (i = 0; i < array.length; i++)
+    if (uniqueArray.indexOf(array[i]) === -1)
+      uniqueArray.push(array[i]);
   return uniqueArray;
 }

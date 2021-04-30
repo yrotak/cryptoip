@@ -183,11 +183,12 @@ $(document).on("click", ".connectToServer-btn", function () {
       if (messageDataDecrypt.isMain) {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
       } else {
-        channels.forEach((channel) => {
-          if(channel.name == messageDataDecrypt.author) {
-            currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channel.clientKey), messageDataDecrypt.signature, currentChannel.publicKey) });
+        for (var i = 0; i < channels.length; i++) {
+          if (channels[i].name == messageDataDecrypt.author) {
+            console.log(channels[i]);
+            channels[i].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
           }
-        });
+        }
       }
       $(".messages").empty();
 
@@ -210,13 +211,15 @@ $(document).on("click", ".connectToServer-btn", function () {
       // startAt = Math.max(context.currentTime, 0);
       // source.start(0);
       // startAt += buffer.duration;
-      var enc = new TextEncoder();
-      var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(mainKey).buffer, enc.encode(mainKey).buffer))], {
-        'type': 'audio/webm; codecs=opus'
-      });
-      var audio = document.createElement('audio');
-      audio.src = window.URL.createObjectURL(blob);
-      audio.play();
+      if (isInCall) {
+        var enc = new TextEncoder();
+        var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(mainKey).buffer, enc.encode(mainKey).buffer))], {
+          'type': 'audio/webm; codecs=opus'
+        });
+        var audio = document.createElement('audio');
+        audio.src = window.URL.createObjectURL(blob);
+        audio.play();
+      }
     });
   });
 });

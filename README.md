@@ -45,3 +45,4 @@ Cryptoip is an Open source project, that can provide a client and server for sec
 - Fix mute button
 - Proxy connection
 - Voice detection
+- Screen share

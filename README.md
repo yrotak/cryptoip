@@ -37,6 +37,7 @@ Cryptoip is an Open source project, that can provide a client and server for sec
 2. It is impossible to track you even if the Owner of the server modify server code.
 3. You are safe, all your packet (communication with server) is encrypted and can't be decrypted without the key.
 4. Freedom, you can talk about anything on Cryptoip, the voip communication is encrypted
+5. You cannot be impersonated with signature check and keyHash verification
 
 
 ### TODO:

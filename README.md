@@ -8,6 +8,8 @@
 > Language: NodeJS, HTML, CSS, JS
 <br>
 
+Cryptoip is an Open source project, that can provide a client and server for securised communication, every data is encrypted with a strong cryptographic algorythm (aes-128-cbc), it can't be decrypted without the key.
+
 ### Libraries:
 - express
 - http
@@ -41,3 +43,4 @@
 - Addind panic button (erase all data of cryptoip)
 - Fix mute button
 - Proxy connection
+- Voice detection

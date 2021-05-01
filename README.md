@@ -5,7 +5,7 @@
 [Releases](https://github.com/DrayNeur/cryptoip/releases)
 
 > VOIP Client / Server <br>
-> Language: NodeJS
+> Language: NodeJS, HTML, CSS, JS
 <br>
 
 ### Libraries:
@@ -14,10 +14,11 @@
 - socket.io
 - electron
 - crypto
+- jquery
 
 ### Features:
 - Real time voip
-- Encrypted packets
+- Encrypted packets with AES 128
 - GUI with electron JS
 - Server can handle mutliple clients
 - Good voice quality
@@ -26,3 +27,17 @@
 - Private messages
 - Unique username
 - Signature check
+- Messages save on disk (not server)
+
+
+### Why cryptoip ?
+1. It provide good quality of communication.
+2. It is impossible to track you even if the Owner of the server modify server code.
+3. You are safe, all your packet (communication with server) is encrypted and can't be decrypted without the key.
+4. Freedom, you can talk about anything on Cryptoip, the voip communication is encrypted
+
+
+### TODO:
+- Addind panic button (erase all data of cryptoip)
+- Fix mute button
+- Proxy connection

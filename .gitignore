@@ -7094,3 +7094,4 @@ client/release-builds/cryptoip-win32-x64/version
 client/release-builds/cryptoip-win32-x64/vk_swiftshader.dll
 client/release-builds/cryptoip-win32-x64/vk_swiftshader_icd.json
 client/release-builds/cryptoip-win32-x64/vulkan-1.dll
+client/release-builds/cryptoip-win32-x64/cryptoip-win32-x64.zip

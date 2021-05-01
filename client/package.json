@@ -13,9 +13,7 @@
   "author": "Drayneur",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^11.0.3",
-    "audio-play": "2.3.1",
-    "audio-context": "1.0.3"
+    "electron": "^11.0.3"
   },
   "dependencies": {
     "remote": "^0.2.6"

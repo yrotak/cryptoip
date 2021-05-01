@@ -46,3 +46,4 @@ Cryptoip is an Open source project, that can provide a client and server for sec
 - Proxy connection
 - Voice detection
 - Screen share
+- Fix config file & data file

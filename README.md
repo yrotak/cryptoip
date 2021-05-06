@@ -48,3 +48,4 @@ Cryptoip is an Open source project, that can provide a client and server for sec
 - Screen share
 - Fix config file & data file
 - Notification
+- Fix signature popup position

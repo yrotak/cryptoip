@@ -13,12 +13,14 @@ var callThread = null;
 var keyHash = null;
 const fs = require('fs');
 const crypto = require('crypto');
+const path = require('path');
 window.$ = window.jQuery = require('./3rdparty/jquery.js');
 
 $(document).ready(function () {
+  $(".clearData-overlay").css("display", "none");
   clearPages();
-  if (fs.existsSync("config.json")) {
-    fs.readFile("config.json", function (err, data) {
+  if (fs.existsSync(path.join(process.env.APPDATA ,"cryptoip","config.json"))) {
+    fs.readFile(path.join(process.env.APPDATA ,"cryptoip","config.json"), function (err, data) {
       if (err) alert(err);
       $(".username-input").val(JSON.parse(data).username);
       $(".serverList").empty();
@@ -46,7 +48,7 @@ $(document).on("click", ".fav-server", function () {
   $(".host-input").val($(this).text());
 });
 $(document).on("click", ".skip-password-btn", function () {
-  fs.writeFile("config.json", JSON.stringify({ encrypted: false, passsentence: passSentence, username: null, servers: [] }), function (err) {
+  fs.writeFile(path.join(process.env.APPDATA ,"cryptoip","config.json"), JSON.stringify({ encrypted: false, passsentence: passSentence, username: null, servers: [] }), function (err) {
     if (err) alert(err);
     window.location.reload();
   });
@@ -57,6 +59,12 @@ $(document).on("click", ".disconnect-button", function () {
   $(".connectToServer").css("display", "block");
   isInCall = false;
   socket = null;
+});
+$(document).on("click", ".clearData-overlay", function () {
+  $(".clearData-overlay").css("display", "none");
+});
+$(document).on("click", ".clearData-btn", function () {
+  $(".clearData-overlay").css("display", "block");
 });
 $(document).on("submit", ".sendMessage", function (e) {
   e.preventDefault();
@@ -69,13 +77,13 @@ $(document).on("submit", ".sendMessage", function (e) {
     var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
     $(".messages").append($(messageHTML));
   });
-  var messageData = JSON.parse(decrypt(fs.readFileSync("data.bin").toString(), keyHash));
+  var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")).toString(), keyHash));
   if (messageData[currentServer].findIndex(p => p.name == currentChannel.name) != -1) {
     messageData[currentServer][messageData[currentServer].findIndex(p => p.name == currentChannel.name)].messages.push({ author: username, content: $(".message-send").val(), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), isMain: currentChannel.name == "main", checked: verify($(".message-send").val(), sign($(".message-send").val(), keyPair.privateKey, passSentence), keyPair.publicKey) });
   } else {
     messageData[currentServer].push(currentChannel);
   }
-  fs.writeFileSync("data.bin",  encrypt(JSON.stringify(messageData), crypto.createHash('sha256').update(passSentence).digest("hex")));
+  fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"),  encrypt(JSON.stringify(messageData), crypto.createHash('sha256').update(passSentence).digest("hex")));
   secureKey = randomString(16);
   if (currentChannel.name == "main") {
     socket.emit("message", encrypt(JSON.stringify({ message: encrypt($(".message-send").val(), currentChannel.clientKey), signature: sign($(".message-send").val(), keyPair.privateKey, passSentence), receiver: currentChannel.socketId, publicKey: keyPair.publicKey }), secureKey), secureKey);
@@ -85,7 +93,7 @@ $(document).on("submit", ".sendMessage", function (e) {
   $(".message-send").val("");
 });
 $(document).on("click", ".setup-password-btn", function () {
-  fs.writeFile("config.json", JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()), username: null, servers: [] }), function (err) {
+  fs.writeFile(path.join(process.env.APPDATA ,"cryptoip","config.json"), JSON.stringify({ encrypted: true, passsentence: encrypt(passSentence, $(".passSentence-pass").val()), username: null, servers: [] }), function (err) {
     if (err) alert(err);
     window.location.reload();
   });
@@ -129,6 +137,16 @@ $(document).on("click", ".call-btn", function () {
   $(".mute-btn").css("display", "inline");
   $(".hangup-btn").css("display", "inline");
 });
+$(document).on("click", ".mute-btn", function () {
+  muted = true;
+  $(".muted-btn").css("display", "inline");
+  $(".mute-btn").css("display", "none");
+});
+$(document).on("click", ".muted-btn", function () {
+  muted = false;
+  $(".muted-btn").css("display", "none");
+  $(".mute-btn").css("display", "inline");
+});
 $(document).on("click", ".hangup-btn", function () {
   isInCall = false;
   muted = false;
@@ -142,11 +160,11 @@ $(document).on("click", ".connectToServer-btn", function () {
   username = $(".username-input").val();
   currentServer = $(".host-input").val();
   keyHash = crypto.createHash('sha256').update(passSentence).digest("hex");
-  var config = JSON.parse(fs.readFileSync("config.json"));
+  var config = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","config.json")));
   config.username = username;
   config.servers.push(currentServer);
   config.servers = getUnique(config.servers);
-  fs.writeFileSync("config.json", JSON.stringify(config));
+  fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","config.json"), JSON.stringify(config));
   socket.on("connect", () => {
     clientKey = randomString(16);
     clearPages();
@@ -181,10 +199,10 @@ $(document).on("click", ".connectToServer-btn", function () {
         }
       });
       switchChannel("main");
-      if (!fs.existsSync("data.bin") || fs.readFileSync("data.bin") == null || fs.readFileSync("data.bin") == undefined || fs.readFileSync("data.bin").toString() == "") {
-        fs.writeFileSync("data.bin", encrypt(JSON.stringify({}), keyHash));
+      if (!fs.existsSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")) || fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")) == null || fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")) == undefined || fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")).toString() == "") {
+        fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"), encrypt(JSON.stringify({}), keyHash));
       }
-      var messageData = JSON.parse(decrypt(fs.readFileSync("data.bin").toString(), keyHash));
+      var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")).toString(), keyHash));
       if (messageData[currentServer] != undefined && messageData[currentServer] != null) {
         for (var i = 0; i < channels.length; i++) {
           if (messageData[currentServer].findIndex(p => p.name == channels[i].name) != -1) {
@@ -193,7 +211,7 @@ $(document).on("click", ".connectToServer-btn", function () {
         }
       } else {
         messageData[currentServer] = [];
-        fs.writeFileSync("data.bin", encrypt(JSON.stringify(messageData), keyHash));
+        fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"), encrypt(JSON.stringify(messageData), keyHash));
       }
       currentChannel.messages.forEach((message) => {
         var color = message.checked ? '#19b019' : '#b02819';
@@ -206,6 +224,9 @@ $(document).on("click", ".connectToServer-btn", function () {
     socket.on("kick", function (reason, secureKey) {
       socket.disconnect();
       socket = null;
+      clearInterval(callThread);
+      isInCall = false;
+      muted = false;
       clearPages();
       $(".connectToServer").css("display", "block");
       alert(decrypt(reason, secureKey));
@@ -215,25 +236,25 @@ $(document).on("click", ".connectToServer-btn", function () {
       console.log(messageDataDecrypt);
       if (messageDataDecrypt.isMain) {
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
-        var messageData = JSON.parse(decrypt(fs.readFileSync("data.bin").toString(), keyHash));
+        var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")).toString(), keyHash));
         if (messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author) != -1) {
           messageData[currentServer][messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
         } else {
           messageData[currentServer].push(channels[0]);
         }
-        fs.writeFileSync("data.bin",  encrypt(JSON.stringify(messageData), keyHash));
+        fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"),  encrypt(JSON.stringify(messageData), keyHash));
       } else {
         for (var i = 0; i < channels.length; i++) {
           if (channels[i].name == messageDataDecrypt.author) {
             console.log(channels[i]);
             channels[i].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
-            var messageData = JSON.parse(decrypt(fs.readFileSync("data.bin").toString(), keyHash));
+            var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")).toString(), keyHash));
             if (messageData[currentServer].findIndex(p => p.name == channels[i].name) != -1) {
               messageData[currentServer][messageData[currentServer].findIndex(p => p.name == channels[i].name)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
             } else {
               messageData[currentServer].push(channels[i]);
             }
-            fs.writeFileSync("data.bin",  encrypt(JSON.stringify(messageData), keyHash));
+            fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"),  encrypt(JSON.stringify(messageData), keyHash));
           }
         }
       }
@@ -273,7 +294,7 @@ $(document).on("click", ".connectToServer-btn", function () {
 // secureKey = randomString(16);
 //     socket.emit("message", encrypt(JSON.stringify({ message: encrypt(message, $scope.currentChannel.clientKey), signature: sign(message, keyPair.privateKey, passSentence), receiver: receiver }), secureKey), secureKey);
 $(document).on("click", ".login-btn", function () {
-  fs.readFile("config.json", function (err, data) {
+  fs.readFile(path.join(process.env.APPDATA ,"cryptoip","config.json"), function (err, data) {
     if (err) alert(err);
     passSentence = decrypt(JSON.parse(data).passsentence, $(".password-input").val());
     clearPages();

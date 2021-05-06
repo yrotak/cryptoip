@@ -16,6 +16,23 @@
 <script src="app/js/app.js"></script>
 
 <body>
+  <a class="clearData-overlay">
+    <div class="clearData">
+      <h2 class="title">Clear data</h2>
+      <div class="deleteData-btn">
+        <button class="form-button">All</button>
+        <p class="text">Auth info, server history, message history,cache and logs</p>
+      </div>
+      <div class="deleteData-btn">
+        <button class="form-button-outline">Config</button>
+        <p class="text">Auth info, server history</p>
+      </div>
+      <div class="deleteData-btn">
+        <button class="form-button-outline">Data</button>
+        <p class="text">message history</p>
+      </div>
+    </div>
+  </a>
   <div class="serverConnected">
     <div class="server-info">
       <h2 class="title host-title">-</h2>
@@ -55,6 +72,7 @@
       <input type="text" class="form-input host-input" placeholder="e.g 127.0.0.1:3000">
       <div class="connect">
         <button class="form-button connectToServer-btn">Connect</button>
+        <button class="form-button-outline clearData-btn">Clear data</button>
       </div>
       <h5 class="title">Server history</h5>
       <div class="serverList"></div>

@@ -14,8 +14,8 @@ var keyHash = null;
 const fs = require('fs');
 const crypto = require('crypto');
 const path = require('path');
+const remote = require('electron').remote;;
 window.$ = window.jQuery = require('./3rdparty/jquery.js');
-
 $(document).ready(function () {
   $(".clearData-overlay").css("display", "none");
   clearPages();
@@ -154,6 +154,42 @@ $(document).on("click", ".hangup-btn", function () {
   clearCallButtons();
   $(".call-btn").css("display", "block");
 });
+
+$(document).on("click", ".delete-all-data-btn", function () {
+  try {
+    fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","config.json"), encrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","config.json")),randomString(16)));
+    fs.unlinkSync(path.join(process.env.APPDATA ,"cryptoip","config.json"));
+  } catch(e) {
+    alert(e);
+  }
+  try {
+    fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"), encrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")),randomString(16)));
+    fs.unlinkSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"));
+  } catch(e) {
+    alert(e);
+  }
+  window.location.reload();
+});
+$(document).on("click", ".delete-config-data-btn", function () {
+  try {
+    fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","config.json"), encrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","config.json")),randomString(16)));
+    fs.unlinkSync(path.join(process.env.APPDATA ,"cryptoip","config.json"));
+  } catch(e) {
+    alert(e);
+  }
+  window.location.reload();
+});
+$(document).on("click", ".delete-data-btn", function () {
+  try {
+    fs.writeFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"), encrypt(fs.readFileSync(path.join(process.env.APPDATA ,"cryptoip","data.bin")),randomString(16)));
+    fs.unlinkSync(path.join(process.env.APPDATA ,"cryptoip","data.bin"));
+  } catch(e) {
+    alert(e);
+  }
+  window.location.reload();
+});
+
+
 $(document).on("click", ".connectToServer-btn", function () {
   socket = io.connect('http://' + $(".host-input").val() + '/');
   keyPair = createKeyPair(passSentence);

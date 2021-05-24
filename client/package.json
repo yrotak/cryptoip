@@ -16,6 +16,7 @@
     "electron": "^11.0.3"
   },
   "dependencies": {
+    "node-notifier": "^9.0.1",
     "remote": "^0.2.6"
   }
 }

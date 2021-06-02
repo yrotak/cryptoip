@@ -217,7 +217,18 @@ body, html {
     box-shadow: 2px 0px 0px 0px rgba(147, 22, 33, 1);
     transition: 0.2s;
 }
-
+.user-call {
+    display: block;
+    cursor: pointer;
+    user-select: none;
+    width: 130px;
+    color: #EEEEFF;
+    text-decoration: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    transition: 0.2s;
+}
 .users {
     background: #131313;
     height: 100vh;
@@ -350,6 +361,16 @@ body, html {
 .fav-server:hover {
     opacity: 0.8;
     transition: 0.2s;
+}
+.callPanel {
+    position: absolute;
+    right: 10px;
+    top: 110px;
+    background: #131313;
+    height: 500px;
+    width: 160px;
+    border-radius: 4px;
+    padding: 5px;
 }
 @-moz-keyframes scroll-left {
     0% {

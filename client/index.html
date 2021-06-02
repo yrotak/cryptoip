@@ -11,6 +11,7 @@
 <script src="3rdparty/socket.io.min.js"></script>
 <script src="3rdparty/jquery.js"></script>
 <script src="3rdparty/all.min.js"></script>
+<script src="app/js/vad.js"></script>
 <script src="app/js/aes.js"></script>
 <script src="app/js/crypto.js"></script>
 <script src="app/js/app.js"></script>
@@ -26,10 +27,6 @@
       <div class="deleteData-btn">
         <button class="form-button-outline delete-config-data-btn">Config</button>
         <p class="text">Auth info, server history (encrypt data)</p>
-      </div>
-      <div class="deleteData-btn">
-        <button class="form-button-outline delete-data-btn">Data</button>
-        <p class="text">Message history (encrypt data)</p>
       </div>
       <hr>
       <p class="text">To delete any trace you need to remove every file in appdata/cryptoip restart explorer.exe and restart PcaSvc Service. Maybe encrypt your data will be safer then deleting.</p>
@@ -49,6 +46,13 @@
       <h5 class="title motd">-</h5>
     </div>
 
+    <div class="callPanel">
+      <h4 class="title">Call</h4>
+      <hr>
+      <div class="call-list">
+        <a class="user-call">Drayneur <i class="fas fa-microphone-slash"></i></a>
+      </div>
+    </div>
 
     <div class="users">
     </div>

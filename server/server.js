@@ -87,13 +87,18 @@ io.sockets.on('connection', (socket) => {
       socket.broadcast.emit('callList', encrypt(JSON.stringify(inCall), secureKey), secureKey);
       io.to(socket.id).emit("callList", encrypt(JSON.stringify(inCall), secureKey), secureKey);
 
-      socket.broadcast.emit('disconnectcall');
-      io.to(socket.id).emit('disconnectcall');
+      if (inCall.findIndex(p => p.socketId == socket.id) != -1) {
+        socket.broadcast.emit('disconnectcall');
+        io.to(socket.id).emit('disconnectcall');
+      }
     }
   });
   socket.on("radio", (data) => {
-    if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) != -1 && inCall[inCall.findIndex(p => p.socketId == socket.id)].muted != true)
-      socket.broadcast.emit('voice', data);
+    if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) != -1 && inCall[inCall.findIndex(p => p.socketId == socket.id)].muted != true) {
+      inCall.forEach((usercall) => {
+        io.to(usercall.socketId).emit('voice', data);
+      });
+    }
   });
   socket.on("muteStatus", (muted) => {
     if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) != -1) {
@@ -115,13 +120,14 @@ io.sockets.on('connection', (socket) => {
     }
   });
   socket.on("quitCall", () => {
-    inCall.splice(inCall.findIndex(p => p.socketId == socket.id), 1);
-    secureKey = randomString(16);
-    socket.broadcast.emit('callList', encrypt(JSON.stringify(inCall), secureKey), secureKey);
-    io.to(socket.id).emit("callList", encrypt(JSON.stringify(inCall), secureKey), secureKey);
-
-    socket.broadcast.emit('disconnectcall');
-    io.to(socket.id).emit('disconnectcall');
+    if (inCall.findIndex(p => p.socketId == socket.id) != -1) {
+      inCall.splice(inCall.findIndex(p => p.socketId == socket.id), 1);
+      secureKey = randomString(16);
+      socket.broadcast.emit('callList', encrypt(JSON.stringify(inCall), secureKey), secureKey);
+      io.to(socket.id).emit("callList", encrypt(JSON.stringify(inCall), secureKey), secureKey);
+      socket.broadcast.emit('disconnectcall');
+      io.to(socket.id).emit('disconnectcall');
+    }
   });
 });
 function randomString(length) {

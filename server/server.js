@@ -23,8 +23,8 @@ io.sockets.on('connection', (socket) => {
   // CONNECTION
   socket.on("connection", (connectionInfos, secureKey) => {
     var connectionInfosDecrypt = JSON.parse(decrypt(connectionInfos, secureKey));
-    if (users.findIndex(p => p.name == connectionInfosDecrypt.name) != -1) {
-      if (users[users.findIndex(p => p.name == connectionInfosDecrypt.name)].keyHash == connectionInfosDecrypt.keyHash) {
+    if (users.findIndex(p => p.username == connectionInfosDecrypt.username) != -1) {
+      if (users[users.findIndex(p => p.username == connectionInfosDecrypt.username)].keyHash == connectionInfosDecrypt.keyHash) {
         if (online.findIndex(p => p.socketId == socket.id) == -1)
           online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey, clientKey: connectionInfosDecrypt.clientKey, actionNumber: 0, warn: 0 });
         secureKey = randomString(16);
@@ -96,7 +96,8 @@ io.sockets.on('connection', (socket) => {
   socket.on("radio", (data) => {
     if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) != -1 && inCall[inCall.findIndex(p => p.socketId == socket.id)].muted != true) {
       inCall.forEach((usercall) => {
-        io.to(usercall.socketId).emit('voice', data);
+        if(usercall.socketId != socket.id)
+          io.to(usercall.socketId).emit('voice', data);
       });
     }
   });

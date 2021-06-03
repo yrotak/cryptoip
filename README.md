@@ -17,6 +17,7 @@ Cryptoip is an Open source project, that can provide a client and server for sec
 - electron
 - crypto
 - jquery
+- node-notifier
 
 ### Features:
 - Real time voip

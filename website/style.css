@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300&display=swap');
+* {
+    padding: 0;
+    margin: 0;
+}
+body {
+    overflow: hidden;
+}
+.header {
+    background: #232323;
+    height: 128px;
+}
+.header .logo {
+    object-fit: cover;
+    width: 384px;
+    height: 128px;
+    position: absolute;
+    transform: translateX(-50%);
+    left: 50%;
+}
+.header .logo-complex {
+    width: 128px;
+    height: 128px;
+}
+.main {
+    background: #131313;
+    height: 100vh;
+}
+.main .description {
+    position: relative;
+    top: 50px;
+    color: #eeeffe;
+    text-align: center;
+    font-family: 'Lato',sans-serif;
+}
+.main .github-buttons {
+    position: relative;
+    top: 60px;
+    margin: 0 auto;
+    width: fit-content;
+}
+.main .title {
+    position: relative;
+    top: 75px;
+    color: #eeeffe;
+    text-align: center;
+    font-family: 'Lato',sans-serif;
+}
+.main .download-buttons {
+    position: relative;
+    top: 100px;
+    margin: 0 auto;
+    width: fit-content;
+    display: flex;
+}
+.main .download-buttons .download-button {
+    margin: 0px 5px 0px 5px;
+    background: #931621;
+    padding: 15px;
+    color: #eeeffe;
+    font-family: 'Lato',sans-serif;
+    font-size: 24px;
+    text-decoration: none;
+    text-align: center;
+    transition: 0.2s background;
+}
+.main .download-buttons .download-button:hover {
+    background: #6E1018;
+    transition: 0.2s background;
+}
+.main .download-buttons .download-button .little-text {
+    font-size: 16px;
+    opacity: 0.8;
+}

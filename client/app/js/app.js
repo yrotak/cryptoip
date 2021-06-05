@@ -77,8 +77,10 @@ $(document).on("submit", ".sendMessage", function (e) {
     var color = message.checked ? '#19b019' : '#b02819';
     var icon = message.checked ? 'check-square' : 'times';
     var checkResult = message.checked ? 'valid' : 'invalid';
-    var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
-    $(".messages").append($(messageHTML));
+    var messageText = $('<p class="text-normal"></p>').text(message.content);
+    var messageContent = $('<div class="message-content"></div>').append(messageText).append($('<div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div>'));
+    var message = $('<li class="message"><h5 class="title">' + message.author.replace(/<(|\/|[^>\/bi]|\/[^>bi]|[^\/>][^>]+|\/[^>][^>]+)>/g, '') + '</h5></li>').append(messageContent);
+    $(".messages").append(message);
   });
   /*var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin")).toString(), keyHash));
   if (messageData[currentServer].findIndex(p => p.name == currentChannel.name) != -1) {
@@ -119,11 +121,11 @@ $(document).on("click", ".call-btn", function () {
 
     // Setup options
     var options = {
-     source: source,
-     voice_stop: function() {isTalking = false;}, 
-     voice_start: function() {isTalking = true;}
-    }; 
-    
+      source: source,
+      voice_stop: function () { isTalking = false; },
+      voice_start: function () { isTalking = true; }
+    };
+
     // Create VAD
     var vad = new VAD(options);
 
@@ -266,8 +268,10 @@ $(document).on("click", ".connectToServer-btn", function () {
         var color = message.checked ? '#19b019' : '#b02819';
         var icon = message.checked ? 'check-square' : 'times';
         var checkResult = message.checked ? 'valid' : 'invalid';
-        var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
-        $(".messages").append($(messageHTML));
+        var messageText = $('<p class="text-normal"></p>').text(message.content);
+        var messageContent = $('<div class="message-content"></div>').append(messageText).append($('<div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div>'));
+        var message = $('<li class="message"><h5 class="title">' + message.author.replace(/<(|\/|[^>\/bi]|\/[^>bi]|[^\/>][^>]+|\/[^>][^>]+)>/g, '') + '</h5></li>').append(messageContent);
+        $(".messages").append(message);
       });
     });
 
@@ -275,9 +279,9 @@ $(document).on("click", ".connectToServer-btn", function () {
       var callListDecrypt = JSON.parse(decrypt(callListReceive, secureKey));
       $(".call-list").empty();
       callListDecrypt.forEach((user) => {
-        $(".call-list").append($("<a class='user-call'>"+channels[channels.findIndex(p => p.socketId == user.socketId)].name+" <i class='fas fa-microphone-slash' style='"+(user.muted ? "display: inline" : "display: none") +"'></i></a>"));
+        $(".call-list").append($("<a class='user-call'>" + channels[channels.findIndex(p => p.socketId == user.socketId)].name + " <i class='fas fa-microphone-slash' style='" + (user.muted ? "display: inline" : "display: none") + "'></i></a>"));
       });
-    });  
+    });
     socket.on("joinedcall", () => {
       var audio = new Audio('./app/resources/connected.wav');
       audio.play();
@@ -285,7 +289,7 @@ $(document).on("click", ".connectToServer-btn", function () {
     socket.on("disconnectcall", () => {
       var audio = new Audio('./app/resources/disconnect.wav');
       audio.play();
-    }); 
+    });
     socket.on("kick", function (reason, secureKey) {
       socket.disconnect();
       socket = null;
@@ -299,14 +303,6 @@ $(document).on("click", ".connectToServer-btn", function () {
     socket.on("message", function (messageData, secureKey) {
       var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
       if (messageDataDecrypt.isMain) {
-        notifier.notify(
-          {
-            title: messageDataDecrypt.author,
-            message: decrypt(messageDataDecrypt.message, currentChannel.clientKey),
-            icon: path.join(__dirname, 'favicon.png'),
-            sound: true
-          }
-        );
         currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
         //var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin")).toString(), keyHash));
         /*if (messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author) != -1) {
@@ -318,15 +314,6 @@ $(document).on("click", ".connectToServer-btn", function () {
       } else {
         for (var i = 0; i < channels.length; i++) {
           if (channels[i].name == messageDataDecrypt.author) {
-            console.log(channels[i]);
-            notifier.notify(
-              {
-                title: messageDataDecrypt.author,
-                message: decrypt(messageDataDecrypt.message, channels[i].clientKey),
-                icon: path.join(__dirname, 'favicon.png'),
-                sound: true
-              }
-            );
             channels[i].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
             /*var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin")).toString(), keyHash));
             if (messageData[currentServer].findIndex(p => p.name == channels[i].name) != -1) {
@@ -344,8 +331,10 @@ $(document).on("click", ".connectToServer-btn", function () {
         var color = message.checked ? '#19b019' : '#b02819';
         var icon = message.checked ? 'check-square' : 'times';
         var checkResult = message.checked ? 'valid' : 'invalid';
-        var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
-        $(".messages").append($(messageHTML));
+        var messageText = $('<p class="text-normal"></p>').text(message.content);
+        var messageContent = $('<div class="message-content"></div>').append(messageText).append($('<div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div>'));
+        var message = $('<li class="message"><h5 class="title">' + message.author.replace(/<(|\/|[^>\/bi]|\/[^>bi]|[^\/>][^>]+|\/[^>][^>]+)>/g, '') + '</h5></li>').append(messageContent);
+        $(".messages").append(message);
       });
     });
     // var context = new AudioContext();
@@ -399,8 +388,10 @@ function switchChannel(channel) {
             var color = message.checked ? '#19b019' : '#b02819';
             var icon = message.checked ? 'check-square' : 'times';
             var checkResult = message.checked ? 'valid' : 'invalid';
-            var messageHTML = '<li class="message"><h5 class="title">' + message.author + '</h5><div class="message-content"><p class="text-normal">' + message.content + '</p><div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div></li>';
-            $(".messages").append($(messageHTML));
+            var messageText = $('<p class="text-normal"></p>').text(message.content);
+            var messageContent = $('<div class="message-content"></div>').append(messageText).append($('<div class="signature-check"><i style="color: ' + color + ';" class="fas fa-' + icon + '"></i><p class="hover"><strong>Signature:</strong> ' + message.signature + ' (' + checkResult + ')</p></div>'));
+            var message = $('<li class="message"><h5 class="title">' + message.author.replace(/<(|\/|[^>\/bi]|\/[^>bi]|[^\/>][^>]+|\/[^>][^>]+)>/g, '') + '</h5></li>').append(messageContent);
+            $(".messages").append(message);
           });
         }
       });

@@ -196,7 +196,8 @@ body, html {
 }
 
 .channel-button {
-    display: block;
+    display: flex;
+    justify-content: space-between;
     cursor: pointer;
     padding-top: 5px;
     padding-bottom: 5px;
@@ -210,7 +211,13 @@ body, html {
     overflow: hidden;
     transition: 0.2s;
 }
-
+.notif {
+    background: #931621;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+}
 .channel-button:hover {
     -webkit-box-shadow: 2px 0px 0px 0px rgba(147, 22, 33, 1);
     -moz-box-shadow: 2px 0px 0px 0px rgba(147, 22, 33, 1);

@@ -234,18 +234,18 @@ $(document).on("click", ".connectToServer-btn", function () {
       var clientListDecrypt = JSON.parse(decrypt(clientList, secureKey));
       console.log(clientListDecrypt);
       channels = [];
-      channels.push({ name: "main", socketId: "none", messages: [], publicKey: [], clientKey: mainKey });
+      channels.push({ name: "main", socketId: "none", messages: [], publicKey: [], clientKey: mainKey, unread: 0 });
       clientListDecrypt.forEach(function (client) {
-        channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey });
+        channels.push({ name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey, unread: 0 });
       });
       $(".users").empty();
       channels.forEach(function (channel) {
         if (channel.name == "main") {
           currentChannel = channel;
-          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "</a>"));
+          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "<p class='notif notif-"+channel.name+"'>9+</p></a>"));
         } else {
           if (channel.name != username) {
-            $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "</a>"));
+            $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "<p class='notif notif-"+channel.name+"'>2</p></a>"));
           }
         }
       });
@@ -302,28 +302,24 @@ $(document).on("click", ".connectToServer-btn", function () {
     });
     socket.on("message", function (messageData, secureKey) {
       var messageDataDecrypt = JSON.parse(decrypt(messageData, secureKey));
-      if (messageDataDecrypt.isMain) {
-        currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
-        //var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin")).toString(), keyHash));
-        /*if (messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author) != -1) {
-          messageData[currentServer][messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
-        } else {
-          messageData[currentServer].push(channels[0]);
-        }
-        fs.writeFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin"), encrypt(JSON.stringify(messageData), keyHash));*/
-      } else {
-        for (var i = 0; i < channels.length; i++) {
-          if (channels[i].name == messageDataDecrypt.author) {
-            channels[i].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
-            /*var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin")).toString(), keyHash));
-            if (messageData[currentServer].findIndex(p => p.name == channels[i].name) != -1) {
-              messageData[currentServer][messageData[currentServer].findIndex(p => p.name == channels[i].name)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[i].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[i].clientKey), messageDataDecrypt.signature, channels[i].publicKey) });
-            } else {
-              messageData[currentServer].push(channels[i]);
-            }
-            fs.writeFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin"), encrypt(JSON.stringify(messageData), keyHash));*/
-          }
-        }
+      // if (messageDataDecrypt.isMain) {
+      //   currentChannel.messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
+      //   //var messageData = JSON.parse(decrypt(fs.readFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin")).toString(), keyHash));
+      //   /*if (messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author) != -1) {
+      //     messageData[currentServer][messageData[currentServer].findIndex(p => p.name == messageDataDecrypt.author)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, currentChannel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, currentChannel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) });
+      //   } else {
+      //     messageData[currentServer].push(channels[0]);
+      //   }
+      //   fs.writeFileSync(path.join(process.env.APPDATA, "cryptoip", "data.bin"), encrypt(JSON.stringify(messageData), keyHash));*/
+      // } else {
+      //   channels[channels.findIndex(p => p.name == messageDataDecrypt.author)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[channels.findIndex(p => p.name == messageDataDecrypt.author)].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: verify(decrypt(messageDataDecrypt.message, channels[channels.findIndex(p => p.name == messageDataDecrypt.author)].clientKey), messageDataDecrypt.signature, channels[channels.findIndex(p => p.name == messageDataDecrypt.author)].publicKey) });
+      //   channels[channels.findIndex(p => p.name == messageDataDecrypt.author)].unread++;
+      // }
+      var tofind = messageDataDecrypt.isMain ? "main" : messageDataDecrypt.author;
+      channels[channels.findIndex(p => p.name == tofind)].messages.push({ author: messageDataDecrypt.author, content: decrypt(messageDataDecrypt.message, channels[channels.findIndex(p => p.name == tofind)].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: messageDataDecrypt.isMain ? verify(decrypt(messageDataDecrypt.message, channels[channels.findIndex(p => p.name == tofind)].clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) : verify(decrypt(messageDataDecrypt.message, channels[channels.findIndex(p => p.name == tofind)].clientKey), messageDataDecrypt.signature, channels[channels.findIndex(p => p.name == tofind)].publicKey) });
+      if(currentChannel.name != channels[channels.findIndex(p => p.name == tofind)].name) {
+        channels[channels.findIndex(p => p.name == tofind)].unread++;
+        $(".notif-"+channels[channels.findIndex(p => p.name == tofind)].name).text(channels[channels.findIndex(p => p.name == tofind)].unread > 8 ? "9+" : channels[channels.findIndex(p => p.name == tofind)].unread);
       }
       $(".messages").empty();
 
@@ -383,6 +379,7 @@ function switchChannel(channel) {
           $(".currentChannel-name").text(element.name);
           $(".message-send").attr('placeholder', 'Message to ' + element.name);
           currentChannel = element;
+          $(".notif-"+element.name).text("0");
           $(".messages").empty();
           currentChannel.messages.forEach((message) => {
             var color = message.checked ? '#19b019' : '#b02819';
@@ -398,7 +395,14 @@ function switchChannel(channel) {
     }
   });
 }
-
+setInterval(() => {
+  $('.notif').each(function(index) {
+    if(this.textContent == "0") 
+      $(this).css("display", "none");
+    else
+      $(this).css("display", "block");
+  });
+})
 function clearCallButtons() {
   $(".mute-btn").css("display", "none");
   $(".muted-btn").css("display", "none");

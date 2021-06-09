@@ -1,0 +1,35 @@
+{
+  "name": "cryptoip",
+  "version": "1.5.0",
+  "description": "A fully encrypted voip / chat app",
+  "main": "main.js",
+  "scripts": {
+    "watch": "webpack --config webpack.common.js --watch",
+    "start": "electron ."
+  },
+  "repository": "https://github.com/electron/electron-quick-start",
+  "keywords": [
+    "cryptoip"
+  ],
+  "author": "Drayneur",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.4",
+    "@babel/preset-react": "^7.13.13",
+    "babel-loader": "^8.2.2",
+    "css-loader": "^5.2.6",
+    "electron": "^11.0.3",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "sass": "^1.34.1",
+    "sass-loader": "^12.0.0",
+    "socket.io-client": "^4.1.2",
+    "style-loader": "^2.0.0",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2"
+  },
+  "dependencies": {
+    "remote": "^0.2.6"
+  }
+}

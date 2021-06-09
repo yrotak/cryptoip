@@ -1,0 +1,17 @@
+.register {
+    color: #eeeeff;
+    .form {
+        top: 35%;
+        width: 310px;
+        textarea {
+            resize: none;
+        }
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #931621;
+            word-break: break-all;
+        }
+    }
+}

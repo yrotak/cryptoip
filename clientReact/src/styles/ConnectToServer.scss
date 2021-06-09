@@ -1,0 +1,19 @@
+.connectToServer {
+    .show {
+        display: block;
+    }
+    .hidden {
+        display: hidden;
+    }
+    .server {
+        display: block;
+        color: #eeeeff;
+        cursor: pointer;
+        opacity: 0.8;
+        transition: 0.2s opacity;
+        &:hover {
+            transition: 0.2s opacity;
+            opacity: 1.0;
+        }
+    }
+} 

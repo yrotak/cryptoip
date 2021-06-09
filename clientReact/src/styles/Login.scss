@@ -1,0 +1,14 @@
+.login {
+    color: #eeeeff;
+    .form {
+        top: 35%;
+        width: 310px;
+        .hidden {
+            display: none;
+        }
+        .error {
+            color: #931621;
+            word-break: break-all;
+        }
+    }
+}

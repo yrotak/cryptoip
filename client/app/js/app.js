@@ -242,10 +242,10 @@ $(document).on("click", ".connectToServer-btn", function () {
       channels.forEach(function (channel) {
         if (channel.name == "main") {
           currentChannel = channel;
-          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "<p class='notif notif-"+channel.name+"'>9+</p></a>"));
+          $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>#" + channel.name + "<p class='notif notif-"+channel.name+"'>0</p></a>"));
         } else {
           if (channel.name != username) {
-            $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "<p class='notif notif-"+channel.name+"'>2</p></a>"));
+            $(".users").append($("<a class='channel-button' channel-name='" + channel.name + "'>@" + channel.name + "<p class='notif notif-"+channel.name+"'>0</p></a>"));
           }
         }
       });

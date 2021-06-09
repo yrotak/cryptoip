@@ -1,0 +1,29 @@
+.topBar {
+    z-index: 9999;
+    user-select: none;
+    padding: 5px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 25px;
+    background: #000;
+    color: #eeeeff;
+    -webkit-app-region: drag;
+    display: flex;
+    .btns {
+        margin-left: auto;
+        .btn {
+            -webkit-app-region: no-drag;
+            padding: 10px;
+            padding-left: 10px;
+            padding-right: 10px;
+            transition: 0.2s background;
+            cursor: pointer;
+            &:hover {
+                transition: 0.2s background;
+                background: #232323;
+            }
+        }
+    }
+}

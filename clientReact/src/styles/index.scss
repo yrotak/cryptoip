@@ -1,0 +1,104 @@
+@import './Register.scss';
+@import './Login.scss';
+@import './ConnectToServer.scss';
+@import './Server.scss';
+
+@import './TopBar.scss';
+body {
+    overflow: hidden;
+}
+.page {
+    background: #232323;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+}
+* {
+    padding: 0;
+    margin: 0;
+    font-family: 'Consolas', sans-serif;
+}
+.form {
+    background: #131313;
+    width: fit-content;
+    padding: 15px;
+    border-radius: 4px;
+    position: absolute;
+    transform: translate(-50%);
+    top: 40%;
+    left: 50%;
+}
+.input {
+    background: #333333;
+    border: none;
+    min-width: 300px;
+    display: block;
+    padding: 5px;
+    color: #eeeeff;
+    &:focus {
+        outline: none;
+    }
+}
+.form-button-outline {
+    background: transparent;
+    color: #eeeeff;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
+    border: 1px solid #931621;
+    border-radius: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    transition: 0.2s;
+    cursor: pointer;
+    &:hover {
+        background: #931621;
+        transition: 0.2s;
+    }
+
+    &:focus {
+        outline: none;
+    }
+}
+.form-label {
+    color: #eeeeff;
+}
+.form-button {
+    background: #931621;
+    color: #eeeeff;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-right: 10px;
+    padding-left: 10px;
+    border: 1px solid #931621;
+    border-radius: 2px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    transition: 0.2s;
+    cursor: pointer;
+    &:hover {
+        background: #6e1018;
+        transition: 0.2s;
+    }
+    &:focus {
+        outline: none;
+    }
+}
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #131313;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #232323;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #333333;
+}

@@ -1,0 +1,1 @@
+electron-packager . --icon="favicon.ico" --out=./builds --asar --platform=win32 --arch=x64 --overwrite

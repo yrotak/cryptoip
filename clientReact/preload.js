@@ -47,6 +47,12 @@ contextBridge.exposeInMainWorld('electron', {
         },
         createKeys(passsentence) {
             return createKeyPair(passsentence);
+        },
+        verifySign(data, sign, pbk) {
+            return verify(data,sign,pbk);
+        },
+        signData(data, pvk,passsentence) {
+            return sign(data, pvk, passsentence);
         }
     },
     topBarApi: {

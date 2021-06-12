@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ConnectToServer from '../components/ConnectToServer';
 import io from "socket.io-client";
 import Server from '../components/Server';
@@ -62,14 +62,22 @@ const Main = (props) => {
                 var messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, secureKey));
 
                 var tofind = messageDataDecrypt.isMain ? "main" : messageDataDecrypt.author;
-                var channelsTemp = channels;
-                if (channelsTemp.findIndex(p => p.name == tofind) != -1) {
-                    channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].messages.push({ author: messageDataDecrypt.author, content: electron.utilApi.dec(messageDataDecrypt.message, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: messageDataDecrypt.isMain ? electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) : electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].clientKey), messageDataDecrypt.signature, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].publicKey) });
-                    if (currentChannel != channels[channels.findIndex(p => p.name == tofind)].name) {
-                        channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].unread++;
+                console.log(channels);
+                setChannels(channels => channels.map(channel => {
+                    if(channel.name == tofind) {
+                        return {...channel, messages: [...channel.messages, { author: messageDataDecrypt.author, content: electron.utilApi.dec(messageDataDecrypt.message, channel.clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: messageDataDecrypt.isMain ? electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) : electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channel.clientKey), messageDataDecrypt.signature, channel.publicKey) }]};
+                    } else {
+                        return channel;
                     }
-                }
-                setChannels(channelsTemp);
+                }))
+                // var channelsTemp = channels;
+                // if (channelsTemp.findIndex(p => p.name == tofind) != -1) {
+                //     channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].messages.push({ author: messageDataDecrypt.author, content: electron.utilApi.dec(messageDataDecrypt.message, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].clientKey), signature: messageDataDecrypt.signature, isMain: messageDataDecrypt.isMain, checked: messageDataDecrypt.isMain ? electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) : electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].clientKey), messageDataDecrypt.signature, channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].publicKey) });
+                //     if (currentChannel != channels[channels.findIndex(p => p.name == tofind)].name) {
+                //         channelsTemp[channelsTemp.findIndex(p => p.name == tofind)].unread++;
+                //     }
+                // }
+                // setChannels(channelsTemp);
                 // currentChannel.messages.forEach((message) => {
                 //     var color = message.checked ? '#19b019' : '#b02819';
                 //     var icon = message.checked ? 'check-square' : 'times';

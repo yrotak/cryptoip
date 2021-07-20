@@ -70,9 +70,11 @@ io.sockets.on('connection', (socket) => {
       if (messageDataDecrypt.receiver == "none") {
         var author = online[online.findIndex(p => p.socketId == socket.id)].username;
         socket.broadcast.emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true, publicKey: messageDataDecrypt.publicKey }), secureKey), secureKey);
+        io.to(socket.id).emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: true, publicKey: messageDataDecrypt.publicKey }), secureKey), secureKey);
       } else {
         var author = online[online.findIndex(p => p.socketId == socket.id)].username;
         io.to(messageDataDecrypt.receiver).emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: false }), secureKey), secureKey);
+        io.to(socket.id).emit("message", encrypt(JSON.stringify({ message: messageDataDecrypt.message, author: author, signature: messageDataDecrypt.signature, isMain: false, publicKey: messageDataDecrypt.publicKey }), secureKey), secureKey);
       }
     }
   });

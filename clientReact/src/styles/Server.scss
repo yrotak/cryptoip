@@ -2,28 +2,39 @@
     .title {
         color: #eeeeff;
     }
-    .button-call, .call-btn, .call-buttons {
+    .button-call,
+    .call-btn,
+    .call-buttons {
         display: inline;
         float: right;
         margin-right: 5px;
     }
     .callPanel {
-        position: absolute;
-        right: 10px;
-        top: 140px;
-        bottom: 25px;
         background: #131313;
-        width: 160px;
+        width: 15%;
+        height: 80vh;
+        @media only screen and (min-width: 992px) and (max-width: 1200px) {
+            width: 20%;
+        }
+        @media only screen and (max-height: 900px) {
+            height: 70vh;
+        }
+        margin-right: 10px;
+        align-self: center;
         border-radius: 4px;
-        padding: 5px;
+        padding: 10px;
+        .call-list {
+            margin-top: 5px;
+        }
     }
     .channel {
-        position: absolute;
-        bottom: 0;
-        left: 150px;
-        top: 100px;
-        right: 0;
         padding: 15px;
+        margin-top: 20px;
+        width: 85%;
+        @media only screen and (min-width: 992px) and (max-width: 1200px) {
+            width: 80%;
+        }
+        align-self: center;
     }
 
     .channel-button:disabled,
@@ -82,13 +93,15 @@
         /* box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px; */
     }
     .messages {
-        position: absolute;
         padding: 10px;
-        top: 40px;
-        width: 95%;
-        bottom: 50px;
+        position: relative;
+        height: 80vh;
+        @media only screen and (max-height: 900px) {
+            height: 70vh;
+        }
         background: #131313;
-        overflow-y: scroll;
+        border-radius: 4px 4px 0px 0px;
+        overflow-y: auto;
     }
     .disconnect-button {
         float: right;
@@ -117,16 +130,24 @@
         user-select: none;
     }
     .incall {
-        width: 75%;
+        width: 85%;
     }
     .message-send {
-        position: absolute;
-        bottom: 25px;
         text-align: left;
-        width: 96%;
+        box-sizing: border-box;
+        width: 100%;
+        border-radius: 0px 0px 4px 4px;
     }
     .incall-input {
         width: 76%;
+    }
+    .panel {
+        display: flex;
+        position: absolute;
+        bottom: 0;
+        left: 150px;
+        top: 100px;
+        right: 0;
     }
     .message {
         list-style-type: none;
@@ -135,6 +156,7 @@
         margin-bottom: 5px;
         .message-content {
             display: inline;
+            color: #ccc;
         }
 
         .message-content .text-normal {
@@ -144,6 +166,9 @@
         .signature-check {
             float: right;
             display: inline;
+            &:hover .hover {
+                display: block;
+            }
         }
         .signature-check .hover {
             display: none;
@@ -155,9 +180,6 @@
             word-break: break-all;
             background: #232323;
             padding: 4px;
-            &:hover .hover {
-                display: block;
-            }
         }
     }
     .hidden {

@@ -4,8 +4,9 @@
 @import './Server.scss';
 
 @import './TopBar.scss';
-body {
+html,body {
     overflow: hidden;
+    height: 100%;
 }
 .page {
     background: #232323;

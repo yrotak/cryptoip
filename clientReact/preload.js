@@ -30,7 +30,8 @@ contextBridge.exposeInMainWorld('electron', {
         },
         writeConfigConnect(host, username) {
             var data = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')));
-            data.servers.push(host);
+            if(!data.servers.includes(host))
+                data.servers.push(host);
             data.username = username;
             fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), JSON.stringify(data));
         }
@@ -81,8 +82,6 @@ function verify(message, signature, publicKey) {
     return verify.verify(publicKey, signature, 'hex');
 }
 function encrypt(text, password) {
-    console.log(password.repeat(16).slice(0, 16));
-    console.log(password.repeat(16).slice(0, 16).length);
     var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
     var crypted = cipher.update(text, 'utf8', 'hex')
     crypted += cipher.final('hex');

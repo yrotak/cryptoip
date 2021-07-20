@@ -1,7 +1,5 @@
 
-client/node_modules/*
 client/builds/*
-clientReact/node_modules/*
+**/node_modules
 clientReact/builds/*
-server/node_modules/*
 **/package-lock*

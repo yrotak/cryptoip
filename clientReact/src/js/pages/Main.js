@@ -1,16 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import ConnectToServer from '../components/ConnectToServer';
 import io from "socket.io-client";
 import Server from '../components/Server';
 var socket = null;
 
-function MainPages(props) {
-    if (props.connected) {
-        return <Server serverInfos={props.serverInfos} socket={socket} serverHost={props.serverHost} />;
-    } else {
-        return <ConnectToServer userInfos={props.userInfos} connectToServerHandle={props.connectToServerHandle} />;
-    }
-}
 function randomString(length) {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -22,26 +15,92 @@ function randomString(length) {
 }
 const Main = (props) => {
     const [connected, setConnected] = useState(false);
-    const [clientKey, setClientKey] = useState('');
-    const [keyPair, setKeyPair] = useState({});
-    const [serverHost, setServerHost] = useState('');
-
-
+    const [clientKey, setClientKey] = useState(randomString(16));
+    const [keyPair, setKeyPair] = useState(electron.utilApi.createKeys(props.userInfos.passSentence));
+    let serverRef = useRef();
     const connectToServer = (e, server, username) => {
         e.preventDefault();
-        setClientKey(randomString(16));
-        setKeyPair(electron.utilApi.createKeys(props.userInfos.passSentence))
         socket = io("http://" + server);
-        setServerHost(server);
+        var ServerInfos = {};
         socket.on("connect", () => {
             setConnected(true);
             var secureKey = randomString(16);
             socket.emit("connection", electron.utilApi.enc(JSON.stringify({ username: username, keyHash: props.userInfos.keyHash, publicKey: keyPair.publicKey, clientKey: clientKey }), secureKey), secureKey);
         });
+        socket.on("infos", function (infos, secureKey) {
+            var infosDecrypt = JSON.parse(electron.utilApi.dec(infos, secureKey));
+            serverRef.current.setServerInfos({
+                endpoint: server,
+                motd: infosDecrypt.motd,
+                mainKey: infosDecrypt.mainKey
+            });
+            ServerInfos = {
+                endpoint: server,
+                motd: infosDecrypt.motd,
+                mainKey: infosDecrypt.mainKey
+            };
+        });
+        socket.on("clientList", function (clientList, secureKey) {
+            var clientListDecrypt = JSON.parse(electron.utilApi.dec(clientList, secureKey));
+            serverRef.current.setChannels([{ name: "main", socketId: "none", messages: [], publicKey: null, clientKey: ServerInfos.mainKey, unread: 0 }]);
+            clientListDecrypt.forEach((client) => {
+                serverRef.current.setChannels(channelsServer => [...channelsServer, { name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, clientKey: client.clientKey, unread: 0 }]);
+            });
+        });
+        socket.on("kick", function (reason, secureKey) {
+            socket.disconnect();
+            serverRef.current.setConnected(false);
+            alert(electron.utilApi.dec(reason, secureKey));
+        });
+        socket.on("message", function (messageData, secureKey) {
+            var messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, secureKey));
+
+            var tofind = messageDataDecrypt.isMain ? "main" : messageDataDecrypt.author;
+            serverRef.current.setChannels(channelsServer => channelsServer.map(channel => {
+                if (channel.name == tofind) {
+                    return {
+                        ...channel, messages: [...channel.messages, {
+                            author: messageDataDecrypt.author,
+                            content: electron.utilApi.dec(messageDataDecrypt.message, channel.clientKey),
+                            signature: messageDataDecrypt.signature,
+                            isMain: messageDataDecrypt.isMain,
+                            checked: messageDataDecrypt.isMain ?
+                                electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channel.clientKey), messageDataDecrypt.signature, messageDataDecrypt.publicKey) :
+                                electron.utilApi.verifySign(electron.utilApi.dec(messageDataDecrypt.message, channel.clientKey), messageDataDecrypt.signature, channel.publicKey)
+                        }]
+                    };
+                } else {
+                    return channel;
+                }
+            }))
+        });
+        socket.on("joinedcall", () => {
+            var audio = new Audio('./connected.wav');
+            audio.play();
+        });
+        socket.on("disconnectcall", () => {
+            var audio = new Audio('./disconnect.wav');
+            audio.play();
+        });
+        socket.on("callList", (callListReceive, secureKey) => {
+            var callListDecrypt = JSON.parse(electron.utilApi.dec(callListReceive, secureKey));
+            serverRef.current.setClientCallList(callListDecrypt);
+        });
     };
+    const disconnect = () => {
+        socket.disconnect();
+        socket = null;
+        setConnected(false);
+    }
     return (
         <div className="page main">
-            <MainPages connected={connected} userInfos={props.userInfos} connectToServerHandle={connectToServer} socket={socket} serverHost={serverHost}/>
+            {
+                connected ? (
+                    <Server socket={socket} userInfos={props.userInfos} clientKey={clientKey} keyPair={keyPair} disconnect={disconnect} ref={serverRef} />
+                ) : (
+                    <ConnectToServer userInfos={props.userInfos} connectToServerHandle={connectToServer} />
+                )
+            }
         </div>
     );
 };

@@ -37,7 +37,7 @@ body {
     position: relative;
     top: 60px;
     margin: 0 auto;
-    width: fit-content;
+    width: max-content;
 }
 .main .title {
     position: relative;
@@ -50,7 +50,7 @@ body {
     position: relative;
     top: 100px;
     margin: 0 auto;
-    width: fit-content;
+    width: max-content;
     display: flex;
 }
 .main .download-buttons .download-button {

@@ -13,6 +13,9 @@ function randomString(length) {
     }
     return result;
 }
+function getElementByXpath(path) {
+    return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+}
 const Main = (props) => {
     const [connected, setConnected] = useState(false);
     const [clientKey, setClientKey] = useState(randomString(16));
@@ -23,6 +26,7 @@ const Main = (props) => {
         socket = io("http://" + server);
         var ServerInfos = {};
         socket.on("connect", () => {
+            electron.configApi.writeConfigConnect(server, username);
             setConnected(true);
             var secureKey = randomString(16);
             socket.emit("connection", electron.utilApi.enc(JSON.stringify({ username: username, keyHash: props.userInfos.keyHash, publicKey: keyPair.publicKey, clientKey: clientKey }), secureKey), secureKey);
@@ -56,8 +60,11 @@ const Main = (props) => {
             var messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, secureKey));
 
             var tofind = messageDataDecrypt.isMain ? "main" : messageDataDecrypt.author;
+            var messagesElem = getElementByXpath('/html/body/div/div/div[2]/div/div[3]/div/div');
+            var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight === messagesElem.scrollHeight;
             serverRef.current.setChannels(channelsServer => channelsServer.map(channel => {
                 if (channel.name == tofind) {
+                    serverRef.current.addNotification(channel.name)
                     return {
                         ...channel, messages: [...channel.messages, {
                             author: messageDataDecrypt.author,
@@ -73,6 +80,8 @@ const Main = (props) => {
                     return channel;
                 }
             }))
+            if (shouldScroll)
+                messagesElem.scrollTop = messagesElem.scrollHeight;
         });
         socket.on("joinedcall", () => {
             var audio = new Audio('./connected.wav');

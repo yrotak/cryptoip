@@ -35,7 +35,7 @@ const Register = () => {
             <form className="form" onSubmit={(e) => register(e)}>
                 <h2 className="title">Register new account</h2>
                 <label className="form-label">Password</label>
-                <input value={password} onInput={(e) => setPassword(e.target.value)} type="password" className="input" placeholder="e.g Fs4fsef8FS848sf" />
+                <input autoFocus value={password} onInput={(e) => setPassword(e.target.value)} type="password" className="input" placeholder="e.g Fs4fsef8FS848sf" />
                 <label className="form-label">Confirm password</label>
                 <input value={confirmPassword} onInput={(e) => setConfirmPassword(e.target.value)} type="password" className="input" placeholder="e.g Fs4fsef8FS848sf" />
                 <label className="form-label">Pass sentence</label>

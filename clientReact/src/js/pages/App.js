@@ -4,7 +4,8 @@ import Register from './Register';
 import Login from './Login';
 import Main from './Main';
 import axios from 'axios';
-var Version = "1.7";
+import ClearData from '../components/ClearData';
+const Version = "1.7";
 
 const App = () => {
     const [loggedIn, setLoggedIn] = useState(false);
@@ -34,6 +35,7 @@ const App = () => {
                     <Register />
                 )
             }
+            <ClearData />
         </div>
     );
 };

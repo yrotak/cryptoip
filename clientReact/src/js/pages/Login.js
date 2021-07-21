@@ -23,7 +23,7 @@ const Login = (props) => {
             <form className="form" onSubmit={(e) => login(e)}>
                 <h2 className="title">Login</h2>
                 <label className="form-label">Password</label>
-                <input value={password} onInput={(e) => setPassword(e.target.value)} type="password" className="input" placeholder="e.g Fs4fsef8FS848sf" />
+                <input autoFocus value={password} onInput={(e) => setPassword(e.target.value)} type="password" className="input" placeholder="e.g Fs4fsef8FS848sf" />
                 <p className={error == '' ? "hidden" : "error"}>{error}</p>
                 <button className="form-button">Login</button>
             </form>

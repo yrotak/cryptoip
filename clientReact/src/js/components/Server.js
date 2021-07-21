@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
-import FontAwesome from 'react-fontawesome';
 var callThread = null;
 function randomString(length) {
     var result = '';
@@ -26,6 +25,19 @@ const Server = (props, ref) => {
         },
         setClientCallList(msg) {
             setClientCallList(msg)
+        },
+        addNotification(channelname) {
+            if (currentChannel != channelname) {
+                setChannels(channelsServer => channelsServer.map(channel => {
+                    if (channel.name == channelname) {
+                        return {
+                            ...channel, unread: channel.unread+1
+                        };
+                    } else {
+                        return channel;
+                    }
+                }))
+            }
         }
     }), [])
     const [messageTyping, setMessageTyping] = useState('');
@@ -121,7 +133,7 @@ const Server = (props, ref) => {
             </div>
 
             <div className="panel">
-                <div className="channel" style={{width: inCall ? '85%' : '100%'}}>
+                <div className="channel" style={{ width: inCall ? '85%' : '100%' }}>
                     <div className="messages">
                         <h4 className="title currentChannel-name">{currentChannel}</h4>
                         <hr></hr>
@@ -148,11 +160,27 @@ const Server = (props, ref) => {
                         e.preventDefault();
                         var secureKey = randomString(16);
                         var selectedChannel = channelsServer[channelsServer.findIndex(p => p.name == currentChannel)];
+                        var signature = electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence);
                         if (selectedChannel.name == "main") {
-                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({ message: electron.utilApi.enc(messageTyping, selectedChannel.clientKey), signature: electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence), receiver: selectedChannel.socketId, publicKey: props.keyPair.publicKey }), secureKey), secureKey);
+                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({ message: electron.utilApi.enc(messageTyping, selectedChannel.clientKey), signature: signature, receiver: selectedChannel.socketId, publicKey: props.keyPair.publicKey }), secureKey), secureKey);
                         } else {
-                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({ message: electron.utilApi.enc(messageTyping, props.clientKey), signature: electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence), receiver: selectedChannel.socketId }), secureKey), secureKey);
+                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({ message: electron.utilApi.enc(messageTyping, props.clientKey), signature: signature, receiver: selectedChannel.socketId }), secureKey), secureKey);
                         }
+                        setChannels(channelsServer => channelsServer.map(channel => {
+                            if (channel.name == selectedChannel.name) {
+                                return {
+                                    ...channel, messages: [...channel.messages, {
+                                        author: props.userInfos.username,
+                                        content: messageTyping,
+                                        signature: signature,
+                                        isMain: selectedChannel.name == "main",
+                                        checked: electron.utilApi.verifySign(messageTyping, signature, props.keyPair.publicKey)
+                                    }]
+                                };
+                            } else {
+                                return channel;
+                            }
+                        }))
                         setMessageTyping('');
                     }}>
                         <input value={messageTyping} onChange={(e) => setMessageTyping(e.target.value)} className="input message-send" type="text" placeholder={"Message to " + currentChannel}></input>

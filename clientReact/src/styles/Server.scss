@@ -58,12 +58,18 @@
         text-overflow: ellipsis;
         overflow: hidden;
         transition: 0.2s;
+        position: relative;
     }
     .notif {
+        position: absolute;
         background: #931621;
         border-radius: 50%;
-        width: 24px;
-        height: 24px;
+        right: 5px;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 12px;
         z-index: 4;
         text-align: center;
     }
@@ -99,6 +105,7 @@
         @media only screen and (max-height: 900px) {
             height: 70vh;
         }
+        scroll-behavior: smooth;
         background: #131313;
         border-radius: 4px 4px 0px 0px;
         overflow-y: auto;

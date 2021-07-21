@@ -32,6 +32,7 @@ function createWindow() {
 
   ipcMain.on("closeApp", () => {
     app.quit();
+    process.exit(0);
   });
 
 }

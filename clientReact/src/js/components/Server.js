@@ -31,7 +31,7 @@ const Server = (props, ref) => {
                 setChannels(channelsServer => channelsServer.map(channel => {
                     if (channel.name == channelname) {
                         return {
-                            ...channel, unread: channel.unread+1
+                            ...channel, unread: channel.unread + 1
                         };
                     } else {
                         return channel;
@@ -114,7 +114,16 @@ const Server = (props, ref) => {
                             {
                                 channel.name != props.userInfos.username ? (
                                     <a disabled={currentChannel == channel.name} className="channel-button" onClick={() => {
-                                        setCurrentChannel(channel.name)
+                                        setCurrentChannel(channel.name);
+                                        setChannels(channelsServer => channelsServer.map(channelmap => {
+                                            if (channelmap.name == channel.name) {
+                                                return {
+                                                    ...channelmap, unread: 0
+                                                };
+                                            } else {
+                                                return channelmap;
+                                            }
+                                        }))
                                     }}>{(channel.name == "main" ? "#" : "@") + channel.name}
                                         {
                                             channel.unread > 0 ? (
@@ -134,9 +143,8 @@ const Server = (props, ref) => {
 
             <div className="panel">
                 <div className="channel" style={{ width: inCall ? '85%' : '100%' }}>
+                    <h4 className="title currentChannel-name">{currentChannel}</h4>
                     <div className="messages">
-                        <h4 className="title currentChannel-name">{currentChannel}</h4>
-                        <hr></hr>
                         {
                             channelsServer.findIndex(p => p.name == currentChannel) != -1 ? (
                                 channelsServer[channelsServer.findIndex(p => p.name == currentChannel)].messages.map((message) => (

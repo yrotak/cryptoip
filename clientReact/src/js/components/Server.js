@@ -73,10 +73,12 @@ const Server = (props, ref) => {
                 <button className={"form-button-outline call-btn " + (inCall ? 'hidden' : 'show')} onClick={() => {
                     setInCall(true);
                     props.socket.emit("joinCall");
+                    console.log("lesgooo");
                     var constraints = {
                         audio: true
                     };
                     navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
+                        console.log("callback");
                         var mediaRecorder = new MediaRecorder(mediaStream);
                         mediaRecorder.onstart = function (e) {
                             this.chunks = [];
@@ -89,8 +91,8 @@ const Server = (props, ref) => {
                                 'type': 'audio/webm; codecs=opus'
                             });
                             var enc = new TextEncoder();
-                            if (!muted && inCall) {
-                                blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(mainKey).buffer, enc.encode(mainKey).buffer)));
+                            if (!muted) {
+                                blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey).buffer, enc.encode(serverInfos.mainKey).buffer)));
                             }
                         };
                         callThread = setInterval(() => {

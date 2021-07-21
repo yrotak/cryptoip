@@ -115,8 +115,10 @@ io.sockets.on('connection', (socket) => {
       socket.broadcast.emit('callList', encrypt(JSON.stringify(inCall), secureKey), secureKey);
       io.to(socket.id).emit("callList", encrypt(JSON.stringify(inCall), secureKey), secureKey);
 
-      socket.broadcast.emit('joinedcall');
-      io.to(socket.id).emit('joinedcall');
+      inCall.forEach(client => {
+        io.to(client.socketId).emit('joinedcall');
+      });
+      //io.to(socket.id).emit('joinedcall');
     }
   });
   socket.on("quitCall", () => {
@@ -125,7 +127,9 @@ io.sockets.on('connection', (socket) => {
       secureKey = randomString(16);
       socket.broadcast.emit('callList', encrypt(JSON.stringify(inCall), secureKey), secureKey);
       io.to(socket.id).emit("callList", encrypt(JSON.stringify(inCall), secureKey), secureKey);
-      socket.broadcast.emit('disconnectcall');
+      inCall.forEach(client => {
+        io.to(client.socketId).emit('disconnectcall');
+      });
       io.to(socket.id).emit('disconnectcall');
     }
   });

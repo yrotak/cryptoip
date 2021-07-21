@@ -95,6 +95,24 @@ const Main = (props) => {
             var callListDecrypt = JSON.parse(electron.utilApi.dec(callListReceive, secureKey));
             serverRef.current.setClientCallList(callListDecrypt);
         });
+        socket.on('voice', function (data) {
+            // var floats = new Float32Array(data);
+            // var source = context.createBufferSource();
+            // var buffer = context.createBuffer(1, floats.length, 44100);
+            // buffer.getChannelData(0).set(floats);
+            // source.buffer = buffer;
+            // source.connect(context.destination);
+            // startAt = Math.max(context.currentTime, 0);
+            // source.start(0);
+            // startAt += buffer.duration;
+            var enc = new TextEncoder();
+            var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(ServerInfos.mainKey).buffer, enc.encode(ServerInfos.mainKey).buffer))], {
+                'type': 'audio/webm; codecs=opus'
+            });
+            var audio = document.createElement('audio');
+            audio.src = window.URL.createObjectURL(blob);
+            audio.play();
+        });
     };
     const disconnect = () => {
         socket.disconnect();

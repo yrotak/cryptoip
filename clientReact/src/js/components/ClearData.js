@@ -12,7 +12,10 @@ const ClearData = () => {
                             <button className="form-button-outline" onClick={()=>setNeedConfirm(false)}>
                                 Cancel
                             </button>
-                            <button className="form-button">
+                            <button className="form-button" onClick={() => {
+                                electron.configApi.clearData();
+                                window.location.reload();
+                            }}>
                                 Delete
                             </button>
                         </div>

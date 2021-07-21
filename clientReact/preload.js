@@ -2,7 +2,15 @@ const { ipcRenderer, contextBridge} = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-
+function randomString(length) {
+    var result = '';
+    var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+}
 contextBridge.exposeInMainWorld('electron', {
     configApi: {
         isRegister() {
@@ -34,6 +42,10 @@ contextBridge.exposeInMainWorld('electron', {
                 data.servers.push(host);
             data.username = username;
             fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), JSON.stringify(data));
+        },
+        clearData() {
+            fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')), randomString(16)));
+            fs.unlinkSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'));
         }
     },
     utilApi: {

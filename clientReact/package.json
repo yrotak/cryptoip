@@ -5,6 +5,7 @@
   "main": "main.js",
   "scripts": {
     "watch": "webpack --config webpack.common.js --watch",
+    "build": "webpack build --config webpack.common.js",
     "start": "electron ."
   },
   "repository": "https://github.com/electron/electron-quick-start",

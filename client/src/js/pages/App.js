@@ -5,7 +5,7 @@ import Login from './Login';
 import Main from './Main';
 import axios from 'axios';
 import ClearData from '../components/ClearData';
-const Version = "1.7";
+const Version = "1.8";
 
 const App = () => {
     const [loggedIn, setLoggedIn] = useState(false);

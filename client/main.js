@@ -1,22 +1,43 @@
-const {app, BrowserWindow} = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
-function createWindow () {
+function createWindow() {
   const mainWindow = new BrowserWindow({
     width: 1080,
     height: 720,
-    resizable: false,
-    icon: __dirname + '/favicon.ico',
+    minWidth: 1080,
+    minHeight: 720,
+    icon: path.join(__dirname, 'favicon.ico'),
     webPreferences: {
-        nodeIntegration: true,
-        enableRemoteModule: true,
-        contextIsolation: false
-    }
+      nodeIntegration: false,
+      worldSafeExecuteJavaScript: true,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js')
+    },
+    frame: false
   });
   //mainWindow.removeMenu();
   mainWindow.loadFile('index.html');
+
+  ipcMain.on("minimizeApp", () => {
+    mainWindow.minimize();
+  });
+
+  ipcMain.on("maximizeApp", () => {
+    if (!mainWindow.isMaximized()) {
+      mainWindow.maximize();
+    } else {
+      mainWindow.unmaximize();
+    }
+  });
+
+  ipcMain.on("closeApp", () => {
+    app.quit();
+    process.exit(0);
+  });
+
 }
 
-app.whenReady().then(function() {
+app.whenReady().then(function () {
   createWindow();
 
   app.on('activate', function () {

@@ -1,5 +1,4 @@
 
-client/builds/*
+**/dist/
 **/node_modules
-clientReact/builds/*
 **/package-lock*

@@ -1,110 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <title>cryptoip client</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="stylesheet" href="3rdparty/all.min.css">
-  <link rel="stylesheet" href="app/css/cryptoip.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cryptoip</title>
+    <link rel="stylesheet" href="./thirdparty/all.min.css">
 </head>
-<script src="3rdparty/socket.io.min.js"></script>
-<script src="3rdparty/jquery.js"></script>
-<script src="3rdparty/all.min.js"></script>
-<script src="app/js/vad.js"></script>
-<script src="app/js/aes.js"></script>
-<script src="app/js/crypto.js"></script>
-<script src="app/js/app.js"></script>
 
 <body>
-  <a class="clearData-overlay">
-    <div class="clearData">
-      <h2 class="title">Clear data</h2>
-      <div class="deleteData-btn">
-        <button class="form-button delete-all-data-btn">All</button>
-        <p class="text">Auth info, server history, message history (encrypt data)</p>
-      </div>
-      <div class="deleteData-btn">
-        <button class="form-button-outline delete-config-data-btn">Config</button>
-        <p class="text">Auth info, server history (encrypt data)</p>
-      </div>
-      <hr>
-      <p class="text">To delete any trace you need to remove every file in appdata/cryptoip restart explorer.exe and restart PcaSvc Service. Maybe encrypt your data will be safer then deleting.</p>
-    </div>
-  </a>
-  <div class="serverConnected">
-    <div class="server-info">
-      <h2 class="title host-title">-</h2>
-      <button class="form-button disconnect-button"><i class="fas fa-running"></i> Disconnect</button>
-      <div class="call-buttons">
-        <button class="form-button-outline button-call mute-btn"><i class="fas fa-microphone"></i></button>
-        <button class="form-button-outline button-call muted-btn"><i class="fas fa-microphone-slash"></i></button>
-        <button class="form-button-outline button-call hangup-btn"><i class="fas fa-phone-slash"></i></button>
-      </div>
-      <button class="call-button form-button-outline call-btn"><i class="fas fa-phone"></i></button>
-
-      <h5 class="title motd">-</h5>
-    </div>
-
-    <div class="callPanel">
-      <h4 class="title">Call</h4>
-      <hr>
-      <div class="call-list">
-        <a class="user-call">Drayneur <i class="fas fa-microphone-slash"></i></a>
-      </div>
-    </div>
-
-    <div class="users">
-    </div>
-
-
-    <div class="channel">
-      <h4 class="title currentChannel-name">-</h4>
-      <div class="messages">
-      </div>
-      <form class="sendMessage">
-        <input class="form-input message-send" type="text"
-          placeholder="Message to -">
-      </form>
-    </div>
-  </div>
-
-  <div class="connectToServer">
-    <div class="connectPanel">
-      <h2 class="title">Connect to a server</h2>
-      <label class="title">Username (use your own)</label>
-      <input type="text" class="form-input username-input" placeholder="e.g dimitri">
-      <label class="title">Host</label>
-      <input type="text" class="form-input host-input" placeholder="e.g 127.0.0.1:3000">
-      <div class="connect">
-        <button class="form-button connectToServer-btn">Connect</button>
-        <button class="form-button-outline clearData-btn">Clear data</button>
-      </div>
-      <h5 class="title">Server history</h5>
-      <div class="serverList"></div>
-    </div>
-  </div>
-
-  <div class="loginToAccount">
-    <label class="title">Password</label>
-    <input class="form-input password-input" type="password" maxlength="16" placeholder="e.g 1234">
-    <button class="form-button login-btn">Login</button>
-  </div>
-
-  <!-- CREATE NEW PASS SENTENCE -->
-  <div class="createNewPassSentence">
-    <h2 class="title passSentence-title">Pass sentence</h2>
-    <h4 class="passSentence">-</h4>
-    <input type="password" class="form-input passSentence-pass" maxlength="16" placeholder="e.g 1234">
-    <div class="inline">
-      <button class="form-button-outline skip-password-btn">Skip password</button>
-      <button class="form-button setup-password-btn">Setup password</button>
-    </div>
-    <p class="text passSentence-ps">PS: If you create a password and forget it there is no way to get back your pass
-      sentence</p>
-  </div>
-
-
+    <div id="root"></div>
+    <script src="./thirdparty/aes.js"></script>
+    <script src="./thirdparty/crypto.js"></script>
+    <script src="./thirdparty/all.min.js"></script>
+    <script src="./build/js/app.js"></script>
 </body>
 
 </html>

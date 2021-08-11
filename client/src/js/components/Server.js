@@ -9,11 +9,62 @@ function randomString(length) {
     }
     return result;
 }
+const base64abc = [
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m",
+    "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z",
+    "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "+", "/"
+];
+const base64codes = [
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+    255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 62, 255, 255, 255, 63,
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 255, 255, 255, 0, 255, 255,
+    255, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 255, 255, 255, 255, 255,
+    255, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+    41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
+];
+
+function getBase64Code(charCode) {
+    if (charCode >= base64codes.length) {
+        throw new Error("Unable to parse base64 string.");
+    }
+    const code = base64codes[charCode];
+    if (code === 255) {
+        throw new Error("Unable to parse base64 string.");
+    }
+    return code;
+}
+
+function bytesToBase64(bytes) {
+    let result = '', i, l = bytes.length;
+    for (i = 2; i < l; i += 3) {
+        result += base64abc[bytes[i - 2] >> 2];
+        result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+        result += base64abc[((bytes[i - 1] & 0x0F) << 2) | (bytes[i] >> 6)];
+        result += base64abc[bytes[i] & 0x3F];
+    }
+    if (i === l + 1) { // 1 octet yet to write
+        result += base64abc[bytes[i - 2] >> 2];
+        result += base64abc[(bytes[i - 2] & 0x03) << 4];
+        result += "==";
+    }
+    if (i === l) { // 2 octets yet to write
+        result += base64abc[bytes[i - 2] >> 2];
+        result += base64abc[((bytes[i - 2] & 0x03) << 4) | (bytes[i - 1] >> 4)];
+        result += base64abc[(bytes[i - 1] & 0x0F) << 2];
+        result += "=";
+    }
+    return result;
+}
 const Server = (props, ref) => {
     const [muted, setMuted] = useState(false);
     const [inCall, setInCall] = useState(false);
     const [serverInfos, setServerInfos] = useState({});
     const [channelsServer, setChannels] = useState([]);
+    const [messagesStored, setMessagesStored] = useState([{ channel: "main", author: "drayneur", content: "omg", signature: "lol", checked: true }]);
     const [clientCallList, setClientCallList] = useState([]);
     const [currentChannel, setCurrentChannel] = useState('main');
     useImperativeHandle(ref, () => ({
@@ -22,6 +73,9 @@ const Server = (props, ref) => {
         },
         setChannels(msg) {
             setChannels(msg)
+        },
+        setMessagesStored(msg) {
+            setMessagesStored(msg);
         },
         setClientCallList(msg) {
             setClientCallList(msg)
@@ -149,17 +203,25 @@ const Server = (props, ref) => {
                     <div className="messages">
                         {
                             channelsServer.findIndex(p => p.name == currentChannel) != -1 ? (
-                                channelsServer[channelsServer.findIndex(p => p.name == currentChannel)].messages.map((message) => (
-                                    <li key={randomString(16)} className="message">
-                                        <h5 className="title">{message.author}</h5>
-                                        <div className="message-content">
-                                            <p className="text-normal">{message.content}</p>
-                                            <div className="signature-check">
-                                                <i style={{ color: (message.checked ? '#19b019' : '#b02819') }} className={"fas fa-" + (message.checked ? 'check-square' : 'times')}></i>
-                                                <p className="hover"><strong>Signature:</strong>{message.signature + ' (' + (message.checked ? 'valid' : 'invalid') + ')'}</p>
-                                            </div>
-                                        </div>
-                                    </li>
+                                messagesStored.map(message => (
+                                    <>
+                                        {
+                                            message.channel == currentChannel ? (
+                                                <li key={randomString(16)} className="message">
+                                                    <h5 className="title">{message.author}</h5>
+                                                    <div className="message-content">
+                                                        <p className="text-normal">{message.content}</p>
+                                                        <div className="signature-check">
+                                                            <i style={{ color: (message.checked ? '#19b019' : '#b02819') }} className={"fas fa-" + (message.checked ? 'check-square' : 'times')}></i>
+                                                            <p className="hover"><strong>Signature:</strong>{message.signature + ' (' + (message.checked ? 'valid' : 'invalid') + ')'}</p>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            ) : (
+                                                <></>
+                                            )
+                                        }
+                                    </>
                                 ))
                             ) : (
                                 <></>
@@ -169,28 +231,25 @@ const Server = (props, ref) => {
                     <form className="sendMessage" onSubmit={(e) => {
                         e.preventDefault();
                         var secureKey = randomString(16);
+                        var encryptionKey = randomString(16);
                         var selectedChannel = channelsServer[channelsServer.findIndex(p => p.name == currentChannel)];
                         var signature = electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence);
                         if (selectedChannel.name == "main") {
-                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({ message: electron.utilApi.enc(messageTyping, selectedChannel.clientKey), signature: signature, receiver: selectedChannel.socketId, publicKey: props.keyPair.publicKey }), secureKey), secureKey);
+                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
+                                message: electron.utilApi.enc(messageTyping, encryptionKey),
+                                encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, serverInfos.publicKey)),
+                                signature: signature,
+                                receiver: selectedChannel.socketId,
+                                publicKey: btoa(props.keyPair.publicKey)
+                            }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
                         } else {
-                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({ message: electron.utilApi.enc(messageTyping, props.clientKey), signature: signature, receiver: selectedChannel.socketId }), secureKey), secureKey);
+                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
+                                message: electron.utilApi.enc(messageTyping, encryptionKey),
+                                encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, channelsServer[channelsServer.findIndex(p => p.name == currentChannel)].publicKey)),
+                                signature: signature,
+                                receiver: selectedChannel.socketId
+                            }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
                         }
-                        setChannels(channelsServer => channelsServer.map(channel => {
-                            if (channel.name == selectedChannel.name) {
-                                return {
-                                    ...channel, messages: [...channel.messages, {
-                                        author: props.userInfos.username,
-                                        content: messageTyping,
-                                        signature: signature,
-                                        isMain: selectedChannel.name == "main",
-                                        checked: electron.utilApi.verifySign(messageTyping, signature, props.keyPair.publicKey)
-                                    }]
-                                };
-                            } else {
-                                return channel;
-                            }
-                        }))
                         setMessageTyping('');
                     }}>
                         <input value={messageTyping} onChange={(e) => setMessageTyping(e.target.value)} className="input message-send" type="text" placeholder={"Message to " + currentChannel}></input>

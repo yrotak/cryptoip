@@ -25,7 +25,7 @@ const App = () => {
                     <>
                         {
                             loggedIn ? (
-                                <Main userInfos={userInfos} />
+                                <Main userInfos={userInfos} handleData={setUserInfos}/>
                             ) : (
                                 <Login handleLogged={setLoggedIn} handleData={setUserInfos} />
                             )

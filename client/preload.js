@@ -1,4 +1,4 @@
-const { ipcRenderer, contextBridge} = require('electron');
+const { ipcRenderer, contextBridge } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -25,7 +25,7 @@ contextBridge.exposeInMainWorld('electron', {
                     username: data.username,
                     keyHash: crypto.createHash('sha256').update(decrypt(data.passsentence, password)).digest("hex")
                 };
-            } catch(e) {
+            } catch (e) {
                 return false;
             }
         },
@@ -38,7 +38,7 @@ contextBridge.exposeInMainWorld('electron', {
         },
         writeConfigConnect(host, username) {
             var data = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')));
-            if(!data.servers.includes(host))
+            if (!data.servers.includes(host))
                 data.servers.push(host);
             data.username = username;
             fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), JSON.stringify(data));
@@ -58,13 +58,19 @@ contextBridge.exposeInMainWorld('electron', {
         dec(data, psw) {
             return decrypt(data, psw);
         },
+        encRSA(data, pbk) {
+            return encryptRSA(data, pbk);
+        },
+        decRSA(data, pvk) {
+            return decryptRSA(data, pvk);
+        },
         createKeys(passsentence) {
             return createKeyPair(passsentence);
         },
         verifySign(data, sign, pbk) {
-            return verify(data,sign,pbk);
+            return verify(data, sign, pbk);
         },
-        signData(data, pvk,passsentence) {
+        signData(data, pvk, passsentence) {
             return sign(data, pvk, passsentence);
         }
     },
@@ -114,22 +120,42 @@ function createPassSentence() {
     }
     return finalSentence.slice(0, -1);
 }
-function createKeyPair(passSentence) {
+function createKeyPair() {
     const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
-        modulusLength: 1024 * 2,
+        modulusLength: 1024 * 4,
         publicKeyEncoding: {
             type: 'spki',
             format: 'pem'
         },
         privateKeyEncoding: {
             type: 'pkcs8',
-            format: 'pem',
-            cipher: 'aes-256-cbc',
-            passphrase: passSentence
+            format: 'pem'
         }
     });
     return {
         privateKey: privateKey,
         publicKey: publicKey
     };
+}
+function encryptRSA(text, pbk) {
+    const encryptedData = crypto.publicEncrypt(
+        {
+            key: pbk,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: "sha256",
+        },
+        Buffer.from(text, 'ascii')
+    )
+    return encryptedData;
+}
+function decryptRSA(text, pvk) {
+    const decryptedData = crypto.privateDecrypt(
+        {
+            key: pvk,
+            padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+            oaepHash: "sha256",
+        },
+        Buffer.from(text, 'hex')
+    )
+    return decryptedData;
 }

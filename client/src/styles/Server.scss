@@ -156,37 +156,52 @@
         top: 100px;
         right: 0;
     }
-    .message {
+    .message-holder {
         list-style-type: none;
-        word-break: normal;
-        margin-top: 5px;
-        margin-bottom: 5px;
-        .message-content {
-            display: inline;
-            color: #ccc;
+        display: flex;
+        margin: 5px;
+        &.mine {
+            justify-content: space-between;
         }
-
-        .message-content .text-normal {
-            margin-left: 5px;
-            display: inline;
-        }
-        .signature-check {
-            float: right;
-            display: inline;
-            &:hover .hover {
-                display: block;
+        .message {
+            background: #1d1d1d;
+            border-radius: 4px;
+            box-sizing: border-box;
+            padding: 5px;
+            width: 400px;
+            &.mine {
+                background: linear-gradient(to bottom left,#6e1018,#931621);
             }
-        }
-        .signature-check .hover {
-            display: none;
-            color: #ccc;
-            position: absolute;
-            right: 5%;
-            margin-top: -22px;
-            max-width: 350px;
-            word-break: break-all;
-            background: #232323;
-            padding: 4px;
+            .message-content {
+                display: inline;
+                color: #ccc;
+            }
+    
+            .message-content .text-normal {
+                margin-left: 5px;
+                overflow-wrap: break-word;
+                text-align: justify;
+                display: inline;
+            }
+            .signature-check {
+                float: right;
+                display: inline;
+                cursor: pointer;
+                &:active .hover {
+                    display: block;
+                }
+            }
+            .signature-check .hover {
+                display: none;
+                color: #ccc;
+                position: absolute;
+                right: 5%;
+                margin-top: -22px;
+                max-width: 350px;
+                word-break: break-all;
+                background: #232323;
+                padding: 4px;
+            }
         }
     }
     .hidden {

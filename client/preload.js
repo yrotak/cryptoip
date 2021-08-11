@@ -23,7 +23,8 @@ contextBridge.exposeInMainWorld('electron', {
                     passSentence: decrypt(data.passsentence, password),
                     serverHistory: data.servers,
                     username: data.username,
-                    keyHash: crypto.createHash('sha256').update(decrypt(data.passsentence, password)).digest("hex")
+                    keyHash: crypto.createHash('sha256').update(decrypt(data.passsentence, password)).digest("hex"),
+                    password: password
                 };
             } catch (e) {
                 return false;
@@ -46,6 +47,26 @@ contextBridge.exposeInMainWorld('electron', {
         clearData() {
             fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')), randomString(16)));
             fs.unlinkSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'));
+            fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')), randomString(16)));
+            fs.unlinkSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'));
+        },
+        writeMessages(messages, server, password) {
+            try {
+                var data = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')));
+                data[server] = encrypt(JSON.stringify(messages), password)
+                fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'), JSON.stringify(data));
+            } catch (e) {
+                fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'), JSON.stringify({}));
+            }
+        },
+        readMessages(password, server) {
+            try {
+
+                return JSON.parse(decrypt(JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')))[server], password));
+            } catch (e) {
+                console.log(e);
+                return [];
+            }
         }
     },
     utilApi: {
@@ -100,14 +121,14 @@ function verify(message, signature, publicKey) {
     return verify.verify(publicKey, signature, 'hex');
 }
 function encrypt(text, password) {
-    var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
+    var cipher = crypto.createCipheriv("aes-256-cbc", password.repeat(32).slice(0, 32), password.repeat(16).slice(0, 16))
     var crypted = cipher.update(text, 'utf8', 'hex')
     crypted += cipher.final('hex');
     return crypted;
 }
 
 function decrypt(text, password) {
-    var decipher = crypto.createDecipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
+    var decipher = crypto.createDecipheriv("aes-256-cbc", password.repeat(32).slice(0, 32), password.repeat(16).slice(0, 16))
     var dec = decipher.update(text, 'hex', 'utf8')
     dec += decipher.final('utf8');
     return dec;

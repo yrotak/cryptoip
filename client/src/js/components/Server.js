@@ -64,7 +64,7 @@ const Server = (props, ref) => {
     const [inCall, setInCall] = useState(false);
     const [serverInfos, setServerInfos] = useState({});
     const [channelsServer, setChannels] = useState([]);
-    const [messagesStored, setMessagesStored] = useState([{ channel: "main", author: "drayneur", content: "omg", signature: "lol", checked: true }]);
+    const [messagesStored, setMessagesStored] = useState(electron.configApi.readMessages(props.userInfos.password , serverInfos.endpoint));
     const [clientCallList, setClientCallList] = useState([]);
     const [currentChannel, setCurrentChannel] = useState('main');
     useImperativeHandle(ref, () => ({
@@ -94,6 +94,9 @@ const Server = (props, ref) => {
             }
         }
     }), [])
+    useEffect(() => {
+        electron.configApi.writeMessages(messagesStored,serverInfos.endpoint, props.userInfos.password);
+    }, [messagesStored])
     const [messageTyping, setMessageTyping] = useState('');
     return (
         <div className="server">
@@ -207,13 +210,22 @@ const Server = (props, ref) => {
                                     <>
                                         {
                                             message.channel == currentChannel ? (
-                                                <li key={randomString(16)} className="message">
-                                                    <h5 className="title">{message.author}</h5>
-                                                    <div className="message-content">
-                                                        <p className="text-normal">{message.content}</p>
-                                                        <div className="signature-check">
-                                                            <i style={{ color: (message.checked ? '#19b019' : '#b02819') }} className={"fas fa-" + (message.checked ? 'check-square' : 'times')}></i>
-                                                            <p className="hover"><strong>Signature:</strong>{message.signature + ' (' + (message.checked ? 'valid' : 'invalid') + ')'}</p>
+                                                <li key={randomString(16)} className={"message-holder " + (message.owned ? 'mine' : '')}>
+                                                    {
+                                                        message.owned ? (
+                                                            <p style={{ color: '#131313', userSelect: 'none' }}>I</p>
+                                                        ) : (
+                                                            <></>
+                                                        )
+                                                    }
+                                                    <div className={"message " + (message.owned ? 'mine' : '')}>
+                                                        <h5 className="title">{message.author}</h5>
+                                                        <div className="message-content">
+                                                            <p className="text-normal">{message.content}</p>
+                                                            <div className="signature-check">
+                                                                <i style={{ color: (message.checked ? '#19b019' : '#b02819') }} className={"fas fa-" + (message.checked ? 'check-square' : 'times')}></i>
+                                                                <p className="hover"><strong>Signature:</strong>{message.signature + ' (' + (message.checked ? 'valid' : 'invalid') + ')'}</p>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </li>
@@ -230,25 +242,27 @@ const Server = (props, ref) => {
                     </div>
                     <form className="sendMessage" onSubmit={(e) => {
                         e.preventDefault();
-                        var secureKey = randomString(16);
-                        var encryptionKey = randomString(16);
+                        var secureKey = randomString(32);
+                        var encryptionKey = randomString(32);
                         var selectedChannel = channelsServer[channelsServer.findIndex(p => p.name == currentChannel)];
                         var signature = electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence);
-                        if (selectedChannel.name == "main") {
-                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
-                                message: electron.utilApi.enc(messageTyping, encryptionKey),
-                                encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, serverInfos.publicKey)),
-                                signature: signature,
-                                receiver: selectedChannel.socketId,
-                                publicKey: btoa(props.keyPair.publicKey)
-                            }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
-                        } else {
-                            props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
-                                message: electron.utilApi.enc(messageTyping, encryptionKey),
-                                encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, channelsServer[channelsServer.findIndex(p => p.name == currentChannel)].publicKey)),
-                                signature: signature,
-                                receiver: selectedChannel.socketId
-                            }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
+                        if(messageTyping.replace(/\s/g, '').length != 0) {
+                            if (selectedChannel.name == "main") {
+                                props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
+                                    message: electron.utilApi.enc(messageTyping, encryptionKey),
+                                    encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, serverInfos.publicKey)),
+                                    signature: signature,
+                                    receiver: selectedChannel.socketId,
+                                    publicKey: btoa(props.keyPair.publicKey)
+                                }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
+                            } else {
+                                props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
+                                    message: electron.utilApi.enc(messageTyping, encryptionKey),
+                                    encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, channelsServer[channelsServer.findIndex(p => p.name == currentChannel)].publicKey)),
+                                    signature: signature,
+                                    receiver: selectedChannel.socketId
+                                }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
+                            }
                         }
                         setMessageTyping('');
                     }}>

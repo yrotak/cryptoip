@@ -71,18 +71,18 @@ function base64ToBytes(str) {
 }
 const Main = (props) => {
     const [connected, setConnected] = useState(false);
-    const [clientKey, setClientKey] = useState(randomString(16));
     const [keyPair, setKeyPair] = useState(electron.utilApi.createKeys());
     let serverRef = useRef();
     const connectToServer = (e, server, username) => {
         e.preventDefault();
         socket = io("http://" + server);
         var serverMainKey = "";
+        var channelsPublickeys = [];
         socket.on("connect", () => {
             electron.configApi.writeConfigConnect(server, username);
             setConnected(true);
             socket.on("publicKey", (publicKey) => {
-                var secureKey = randomString(16);
+                var secureKey = randomString(32);
                 socket.emit("connection", electron.utilApi.enc(JSON.stringify({ username: username, keyHash: props.userInfos.keyHash, publicKey: keyPair.publicKey }), secureKey), electron.utilApi.encRSA(secureKey, publicKey));
                 socket.on("infos", function (infos, secureKeyEncrypt) {
                     var infosDecrypt = JSON.parse(electron.utilApi.dec(infos, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
@@ -96,9 +96,10 @@ const Main = (props) => {
                 });
                 socket.on("clientList", function (clientList, secureKeyEncrypt) {
                     var clientListDecrypt = JSON.parse(electron.utilApi.dec(clientList, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
-                    serverRef.current.setChannels([{ name: "main", socketId: "none", messages: [], unread: 0 }]);
+                    serverRef.current.setChannels([{ name: "main", socketId: "none", unread: 0 }]);
                     clientListDecrypt.forEach((client) => {
-                        serverRef.current.setChannels(channelsServer => [...channelsServer, { name: client.username, socketId: client.socketId, messages: [], publicKey: client.publicKey, unread: 0 }]);
+                        serverRef.current.setChannels(channelsServer => [...channelsServer, { name: client.username, socketId: client.socketId, publicKey: client.publicKey, unread: 0 }]);
+                        channelsPublickeys.push({ name: client.username, publicKey: client.publicKey })
                     });
                 });
                 socket.on("kick", function (reason, secureKeyEncrypt) {
@@ -108,20 +109,19 @@ const Main = (props) => {
                 });
                 socket.on("message", function (messageData, secureKeyEncrypt) {
                     var messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))).toString());
-                    var tofind = messageDataDecrypt.isMain ? "main" : messageDataDecrypt.author;
                     var messagesElem = getElementByXpath('/html/body/div/div/div[2]/div/div[3]/div/div');
-                    var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight === messagesElem.scrollHeight;
-                    console.log(messageDataDecrypt.encryptionKey);
-                    console.log(base64ToBytes(messageDataDecrypt.encryptionKey));
+                    var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight-50;
                     var content = electron.utilApi.dec(messageDataDecrypt.message, new TextDecoder().decode(electron.utilApi.decRSA(base64ToBytes(messageDataDecrypt.encryptionKey), keyPair.privateKey)));
+                    serverRef.current.addNotification(messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author)
                     serverRef.current.setMessagesStored(messagesStored => [...messagesStored, {
                         channel: messageDataDecrypt.isMain ? 'main' : messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author,
                         author: messageDataDecrypt.author,
                         content: content,
+                        owned: messageDataDecrypt.author == username,
                         signature: messageDataDecrypt.signature,
                         checked: messageDataDecrypt.isMain ?
                             electron.utilApi.verifySign(content, messageDataDecrypt.signature, atob(messageDataDecrypt.publicKey)) :
-                            electron.utilApi.verifySign(content, messageDataDecrypt.signature, channel.publicKey)
+                            electron.utilApi.verifySign(content, messageDataDecrypt.signature, channelsPublickeys.find(p => p.name == messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author).publicKey)
                     }
                     ])
                     // serverRef.current.setChannels(channelsServer => channelsServer.map(channel => {
@@ -187,7 +187,7 @@ const Main = (props) => {
         <div className="page main">
             {
                 connected ? (
-                    <Server socket={socket} userInfos={props.userInfos} clientKey={clientKey} keyPair={keyPair} disconnect={disconnect} ref={serverRef} />
+                    <Server socket={socket} userInfos={props.userInfos} keyPair={keyPair} disconnect={disconnect} ref={serverRef} />
                 ) : (
                     <ConnectToServer userInfos={props.userInfos} connectToServerHandle={connectToServer} />
                 )

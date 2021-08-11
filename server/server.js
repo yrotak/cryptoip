@@ -11,8 +11,8 @@ var users = [];
 var online = [];
 var inCall = [];
 var keyPair = null;
-var secureKey = randomString(16);
-var mainKey = randomString(16);
+var secureKey = randomString(32);
+var mainKey = randomString(32);
 
 app.get('/', function (req, res) {
   res.sendStatus(400);
@@ -33,12 +33,12 @@ http.listen(port, () => {
           if (online.findIndex(p => p.socketId == socket.id) == -1)
             online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey });
 
-          secureKey = randomString(16);
+          secureKey = randomString(32);
           io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), encryptRSA(secureKey, connectionInfosDecrypt.publicKey));
           online.forEach(client => io.to(client.socketId).emit("clientList", encrypt(JSON.stringify(online), secureKey), encryptRSA(secureKey, client.publicKey)));
 
         } else {
-          secureKey = randomString(16);
+          secureKey = randomString(32);
           io.to(socket.id).emit("kick", encrypt("Use your own username !", secureKey), encryptRSA(secureKey, connectionInfosDecrypt.publicKey));
           socket.disconnect();
         }
@@ -47,11 +47,11 @@ http.listen(port, () => {
           if (online.findIndex(p => p.socketId == socket.id) == -1)
             online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey });
 
-          secureKey = randomString(16);
+          secureKey = randomString(32);
           io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), encryptRSA(secureKey, connectionInfosDecrypt.publicKey));
           online.forEach(client => io.to(client.socketId).emit("clientList", encrypt(JSON.stringify(online), secureKey), encryptRSA(secureKey, client.publicKey)));
         } else {
-          secureKey = randomString(16);
+          secureKey = randomString(32);
           io.to(socket.id).emit("kick", encrypt("Use your own username !", secureKey), encryptRSA(secureKey, connectionInfosDecrypt.publicKey));
           socket.disconnect();
         }
@@ -60,7 +60,7 @@ http.listen(port, () => {
         if (online.findIndex(p => p.socketId == socket.id) == -1)
           online.push({ username: connectionInfosDecrypt.username, socketId: socket.id, publicKey: connectionInfosDecrypt.publicKey });
 
-        secureKey = randomString(16);
+        secureKey = randomString(32);
         io.to(socket.id).emit("infos", encrypt(JSON.stringify({ motd: motd, mainKey: mainKey }), secureKey), encryptRSA(secureKey, connectionInfosDecrypt.publicKey));
         online.forEach(client => io.to(client.socketId).emit("clientList", encrypt(JSON.stringify(online), secureKey), encryptRSA(secureKey, client.publicKey)));
       }
@@ -72,7 +72,7 @@ http.listen(port, () => {
         var messageDataDecrypt = JSON.parse(decrypt(messageData, decryptRSA(secureKeyEncrypt, keyPair.privateKey).toString()));
 
         var author = online[online.findIndex(p => p.socketId == socket.id)].username;
-        secureKey = randomString(16);
+        secureKey = randomString(32);
         if (messageDataDecrypt.receiver == "none") {
           online.forEach(client => io.to(client.socketId).emit("message", encrypt(JSON.stringify({
             message: messageDataDecrypt.message,
@@ -89,6 +89,7 @@ http.listen(port, () => {
             receiverName: online.find(p=>p.socketId == messageDataDecrypt.receiver).username, 
             author: author,
             signature: messageDataDecrypt.signature,
+            publicKey: messageDataDecrypt.publicKey,
             isMain: false
           }), secureKey), encryptRSA(secureKey, online[online.findIndex(p => p.socketId == messageDataDecrypt.receiver)].publicKey));
         }
@@ -98,12 +99,12 @@ http.listen(port, () => {
       if (online.findIndex(p => p.socketId == socket.id) != -1) {
         online.splice(online.findIndex(p => p.socketId == socket.id), 1);
 
-        secureKey = randomString(16);
+        secureKey = randomString(32);
         online.forEach(client => io.to(client.socketId).emit("callList", encrypt(JSON.stringify(inCall), secureKey), encryptRSA(secureKey, client.publicKey)));
 
         if (inCall.findIndex(p => p.socketId == socket.id) != -1) {
           inCall.splice(inCall.findIndex(p => p.socketId == socket.id), 1);
-          secureKey = randomString(16);
+          secureKey = randomString(32);
           online.forEach(client => io.to(client.socketId).emit("callList", encrypt(JSON.stringify(inCall), secureKey), encryptRSA(secureKey, client.publicKey)));
 
           inCall.forEach(client => io.to(client.socketId).emit("disconnectcall"));
@@ -122,14 +123,14 @@ http.listen(port, () => {
     socket.on("muteStatus", (muted) => {
       if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) != -1) {
         inCall[inCall.findIndex(p => p.socketId == socket.id)].muted = muted;
-        secureKey = randomString(16);
+        secureKey = randomString(32);
         online.forEach(client => io.to(client.socketId).emit("callList", encrypt(JSON.stringify(inCall), secureKey), encryptRSA(secureKey, client.publicKey)));
       }
     });
     socket.on("joinCall", () => {
       if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) == -1) {
         inCall.push({ socketId: socket.id, muted: false });
-        secureKey = randomString(16);
+        secureKey = randomString(32);
         online.forEach(client => io.to(client.socketId).emit("callList", encrypt(JSON.stringify(inCall), secureKey), encryptRSA(secureKey, client.publicKey)));
 
         inCall.forEach(client => io.to(client.socketId).emit('joinedcall'));
@@ -139,7 +140,7 @@ http.listen(port, () => {
     socket.on("quitCall", () => {
       if (inCall.findIndex(p => p.socketId == socket.id) != -1) {
         inCall.splice(inCall.findIndex(p => p.socketId == socket.id), 1);
-        secureKey = randomString(16);
+        secureKey = randomString(32);
         online.forEach(client => io.to(client.socketId).emit("callList", encrypt(JSON.stringify(inCall), secureKey), encryptRSA(secureKey, client.publicKey)));
         inCall.forEach(client => io.to(client.socketId).emit('disconnectcall'));
         io.to(socket.id).emit('disconnectcall');
@@ -157,14 +158,14 @@ function randomString(length) {
   return result;
 }
 function encrypt(text, password) {
-  var cipher = crypto.createCipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
+  var cipher = crypto.createCipheriv("aes-256-cbc", password.repeat(32).slice(0, 32), password.repeat(16).slice(0, 16))
   var crypted = cipher.update(text, 'utf8', 'hex')
   crypted += cipher.final('hex');
   return crypted;
 }
 
 function decrypt(text, password) {
-  var decipher = crypto.createDecipheriv("aes-128-cbc", password.repeat(16).slice(0, 16), password.repeat(16).slice(0, 16))
+  var decipher = crypto.createDecipheriv("aes-256-cbc", password.repeat(32).slice(0, 32), password.repeat(16).slice(0, 16))
   var dec = decipher.update(text, 'hex', 'utf8')
   dec += decipher.final('utf8');
   return dec;

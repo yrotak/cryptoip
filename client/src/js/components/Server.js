@@ -270,6 +270,9 @@ const Server = (props, ref) => {
                                     checked: electron.utilApi.verifySign(messageTyping, signature, props.keyPair.publicKey)
                                 }
                                 ])
+                                var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight-50;
+                                if (shouldScroll)
+                                    messagesElem.scrollTop = messagesElem.scrollHeight;
                             }
                         }
                         setMessageTyping('');

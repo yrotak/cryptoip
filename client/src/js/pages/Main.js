@@ -72,9 +72,11 @@ function base64ToBytes(str) {
 const Main = (props) => {
     const [connected, setConnected] = useState(false);
     const [keyPair, setKeyPair] = useState(electron.utilApi.createKeys());
+    const [currentUsername, setCurrentUsername] = useState("");
     let serverRef = useRef();
     const connectToServer = (e, server, username) => {
         e.preventDefault();
+        setCurrentUsername(username);
         socket = io("http://" + server);
         var serverMainKey = "";
         var channelsPublickeys = [];
@@ -112,7 +114,7 @@ const Main = (props) => {
                     var messagesElem = getElementByXpath('/html/body/div/div/div[2]/div/div[3]/div/div');
                     var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight-50;
                     var content = electron.utilApi.dec(messageDataDecrypt.message, new TextDecoder().decode(electron.utilApi.decRSA(base64ToBytes(messageDataDecrypt.encryptionKey), keyPair.privateKey)));
-                    serverRef.current.addNotification(messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author)
+                    serverRef.current.addNotification(messageDataDecrypt.isMain ? 'main' : messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author)
                     serverRef.current.setMessagesStored(messagesStored => [...messagesStored, {
                         channel: messageDataDecrypt.isMain ? 'main' : messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author,
                         author: messageDataDecrypt.author,
@@ -168,7 +170,7 @@ const Main = (props) => {
                     // source.start(0);
                     // startAt += buffer.duration;
                     var enc = new TextEncoder();
-                    var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey).buffer, enc.encode(serverMainKey).buffer))], {
+                    var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey.slice(0,16)).buffer, enc.encode(serverMainKey.slice(0,16)).buffer))], {
                         'type': 'audio/webm; codecs=opus'
                     });
                     var audio = document.createElement('audio');
@@ -187,7 +189,7 @@ const Main = (props) => {
         <div className="page main">
             {
                 connected ? (
-                    <Server socket={socket} userInfos={props.userInfos} keyPair={keyPair} disconnect={disconnect} ref={serverRef} />
+                    <Server socket={socket} username={currentUsername} userInfos={props.userInfos} keyPair={keyPair} disconnect={disconnect} ref={serverRef} />
                 ) : (
                     <ConnectToServer userInfos={props.userInfos} connectToServerHandle={connectToServer} />
                 )

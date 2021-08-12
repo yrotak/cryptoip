@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('electron', {
         },
         readConfig(password) {
             try {
-                var data = JSON.parse(fs.readFileSync(path.join(cryptoipPath, 'cryptoip', 'config.json')));
+                var data = JSON.parse(fs.readFileSync(path.join(cryptoipPath, 'config.json')));
                 return {
                     passSentence: decrypt(data.passsentence, password),
                     serverHistory: data.servers,
@@ -36,6 +36,7 @@ contextBridge.exposeInMainWorld('electron', {
                     password: password
                 };
             } catch (e) {
+                console.log(e);
                 return false;
             }
         },
@@ -54,9 +55,9 @@ contextBridge.exposeInMainWorld('electron', {
             fs.writeFileSync(path.join(cryptoipPath, 'config.json'), JSON.stringify(data));
         },
         clearData() {
-            fs.writeFileSync(path.join(pcryptoipPath, 'config.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')), randomString(16)));
+            fs.writeFileSync(path.join(pcryptoipPath, 'config.json'), encrypt(fs.readFileSync(path.join(cryptoipPath, 'config.json')), randomString(16)));
             fs.unlinkSync(path.join(cryptoipPath, 'config.json'));
-            fs.writeFileSync(path.join(cryptoipPath, 'messages.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')), randomString(16)));
+            fs.writeFileSync(path.join(cryptoipPath, 'messages.json'), encrypt(fs.readFileSync(path.join(cryptoipPath, 'messages.json')), randomString(16)));
             fs.unlinkSync(path.join(cryptoipPath, 'messages.json'));
         },
         writeMessages(messages, server, password) {

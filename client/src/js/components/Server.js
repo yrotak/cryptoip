@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
 var callThread = null;
+var currentChannel = "main";
 function randomString(length) {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -66,7 +67,6 @@ const Server = (props, ref) => {
     const [channelsServer, setChannels] = useState([]);
     const [messagesStored, setMessagesStored] = useState(electron.configApi.readMessages(props.userInfos.password , serverInfos.endpoint));
     const [clientCallList, setClientCallList] = useState([]);
-    const [currentChannel, setCurrentChannel] = useState('main');
     useImperativeHandle(ref, () => ({
         setServerInfos(msg) {
             setServerInfos(msg)
@@ -81,6 +81,8 @@ const Server = (props, ref) => {
             setClientCallList(msg)
         },
         addNotification(channelname) {
+            console.log(currentChannel);
+            console.log(channelname);
             if (currentChannel != channelname) {
                 setChannels(channelsServer => channelsServer.map(channel => {
                     if (channel.name == channelname) {
@@ -94,9 +96,6 @@ const Server = (props, ref) => {
             }
         }
     }), [])
-    useEffect(() => {
-        electron.configApi.writeMessages(messagesStored,serverInfos.endpoint, props.userInfos.password);
-    }, [messagesStored])
     const [messageTyping, setMessageTyping] = useState('');
     return (
         <div className="server">
@@ -149,7 +148,7 @@ const Server = (props, ref) => {
                             });
                             var enc = new TextEncoder();
                             if (!muted) {
-                                blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey).buffer, enc.encode(serverInfos.mainKey).buffer)));
+                                blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey.slice(0,16)).buffer, enc.encode(serverInfos.mainKey.slice(0,16)).buffer)));
                             }
                         };
                         callThread = setInterval(() => {
@@ -171,9 +170,9 @@ const Server = (props, ref) => {
                     channelsServer.map((channel) => (
                         <div key={randomString(16)}>
                             {
-                                channel.name != props.userInfos.username ? (
+                                channel.name != props.username ? (
                                     <a disabled={currentChannel == channel.name} className="channel-button" onClick={() => {
-                                        setCurrentChannel(channel.name);
+                                        currentChannel = channel.name;
                                         setChannels(channelsServer => channelsServer.map(channelmap => {
                                             if (channelmap.name == channel.name) {
                                                 return {
@@ -262,6 +261,15 @@ const Server = (props, ref) => {
                                     signature: signature,
                                     receiver: selectedChannel.socketId
                                 }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
+                                setMessagesStored(messagesStored => [...messagesStored, {
+                                    channel: selectedChannel.name,
+                                    author: props.username,
+                                    content: messageTyping,
+                                    owned: true,
+                                    signature: signature,
+                                    checked: electron.utilApi.verifySign(messageTyping, signature, props.keyPair.publicKey)
+                                }
+                                ])
                             }
                         }
                         setMessageTyping('');

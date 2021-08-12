@@ -11,14 +11,23 @@ function randomString(length) {
     }
     return result;
 }
+var isWin = process.platform === "win32";
+var cryptoipPath = ""
+if(!isWin) {
+    if(!fs.existsSync(path.join(process.env.HOME, 'cryptoip')))
+        fs.mkdirSync(path.join(process.env.HOME, 'cryptoip'))
+    cryptoipPath = path.join(process.env.HOME, 'cryptoip')
+} else {
+    cryptoipPath = path.join(process.env.APPDATA, "cryptoip")
+}
 contextBridge.exposeInMainWorld('electron', {
     configApi: {
         isRegister() {
-            return fs.existsSync(path.join(process.env.APPDATA, "cryptoip", "config.json"));
+            return fs.existsSync(path.join(cryptoipPath, "config.json"));
         },
         readConfig(password) {
             try {
-                var data = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')));
+                var data = JSON.parse(fs.readFileSync(path.join(cryptoipPath, 'cryptoip', 'config.json')));
                 return {
                     passSentence: decrypt(data.passsentence, password),
                     serverHistory: data.servers,
@@ -31,38 +40,38 @@ contextBridge.exposeInMainWorld('electron', {
             }
         },
         writeConfigPassSentence(passSentence, password) {
-            fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), JSON.stringify({
+            fs.writeFileSync(path.join(cryptoipPath, 'config.json'), JSON.stringify({
                 passsentence: encrypt(passSentence, password),
                 username: null,
                 servers: []
             }));
         },
         writeConfigConnect(host, username) {
-            var data = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')));
+            var data = JSON.parse(fs.readFileSync(path.join(cryptoipPath, 'config.json')));
             if (!data.servers.includes(host))
                 data.servers.push(host);
             data.username = username;
-            fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), JSON.stringify(data));
+            fs.writeFileSync(path.join(cryptoipPath, 'config.json'), JSON.stringify(data));
         },
         clearData() {
-            fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')), randomString(16)));
-            fs.unlinkSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json'));
-            fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')), randomString(16)));
-            fs.unlinkSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'));
+            fs.writeFileSync(path.join(pcryptoipPath, 'config.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'config.json')), randomString(16)));
+            fs.unlinkSync(path.join(cryptoipPath, 'config.json'));
+            fs.writeFileSync(path.join(cryptoipPath, 'messages.json'), encrypt(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')), randomString(16)));
+            fs.unlinkSync(path.join(cryptoipPath, 'messages.json'));
         },
         writeMessages(messages, server, password) {
             try {
-                var data = JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')));
+                var data = JSON.parse(fs.readFileSync(path.join(cryptoipPath, 'messages.json')));
                 data[server] = encrypt(JSON.stringify(messages), password)
-                fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'), JSON.stringify(data));
+                fs.writeFileSync(path.join(cryptoipPath, 'messages.json'), JSON.stringify(data));
             } catch (e) {
-                fs.writeFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json'), JSON.stringify({}));
+                fs.writeFileSync(path.join(cryptoipPath, 'messages.json'), JSON.stringify({}));
             }
         },
         readMessages(password, server) {
             try {
 
-                return JSON.parse(decrypt(JSON.parse(fs.readFileSync(path.join(process.env.APPDATA, 'cryptoip', 'messages.json')))[server], password));
+                return JSON.parse(decrypt(JSON.parse(fs.readFileSync(path.join(cryptoipPath, 'messages.json')))[server], password));
             } catch (e) {
                 console.log(e);
                 return [];

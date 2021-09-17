@@ -96,7 +96,7 @@ const Server = (props, ref) => {
             }
         }
     }), [])
-    let bufferSize = 4096,
+    let bufferSize = 2048,
         context,
         processor,
         input,
@@ -128,11 +128,20 @@ const Server = (props, ref) => {
         navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess);
     }
 
+    var compression_mode = 1,
+        my_lzma = new LZMA("./thirdparty/lzma_worker.js");
     function microphoneProcess(e) {
         var left = e.inputBuffer.getChannelData(0);
         // var left16 = convertFloat32ToInt16(left); // old 32 to 16 function
         // var left16 = downsampleBuffer(left, 44100, 16000);
-        props.socket.emit('testvocal', left);
+        console.log(left.length);
+
+        my_lzma.compress(left, compression_mode, function on_compress_complete(result) {
+            console.log(result.length);
+            props.socket.emit('testvocal', result);
+        }, function on_compress_progress_update(percent) {
+            // console.log("Compressing: " + (percent * 100) + "%");
+        });
     }
     function stopRecording() {
         let track = globalStream.getTracks()[0];

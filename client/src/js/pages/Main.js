@@ -168,16 +168,23 @@ const Main = (props) => {
                 });
                 var context = new AudioContext();
                 var startAt = 0;
+                var compression_mode = 1,
+                    my_lzma = new LZMA("./thirdparty/lzma_worker.js");
                 socket.on("testvocal", (data) => {
-                    var floats = new Float32Array(data);
-                    var source = context.createBufferSource();
-                    var buffer = context.createBuffer(1, floats.length, 44100);
-                    buffer.getChannelData(0).set(floats);
-                    source.buffer = buffer;
-                    source.connect(context.destination);
-                    startAt = Math.max(context.currentTime, 0);
-                    source.start(0);
-                    startAt += buffer.duration;
+                    my_lzma.decompress(result, function on_decompress_complete(result) {
+                        var floats = new Float32Array(result);
+                        var source = context.createBufferSource();
+                        var buffer = context.createBuffer(1, floats.length, 44100);
+                        buffer.getChannelData(0).set(floats);
+                        source.buffer = buffer;
+                        source.connect(context.destination);
+                        startAt = Math.max(context.currentTime, 0);
+                        source.start(0);
+                        startAt += buffer.duration;
+                    }, function on_decompress_progress_update(percent) {
+                        /// Decompressing progress code goes here.
+                        document.title = "Decompressing: " + (percent * 100) + "%";
+                    });
                 });
                 socket.on('voice', function (data) {
                     // var floats = new Float32Array(data);

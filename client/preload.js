@@ -14,11 +14,11 @@ function randomString(length) {
 var isWin = process.platform === "win32";
 var cryptoipPath = ""
 if(!isWin) {
-    if(!fs.existsSync(path.join(process.env.HOME, 'cryptoip')))
-        fs.mkdirSync(path.join(process.env.HOME, 'cryptoip'))
-    cryptoipPath = path.join(process.env.HOME, 'cryptoip')
+    if(!fs.existsSync(path.join(process.env.HOME, 'Cryptoip')))
+        fs.mkdirSync(path.join(process.env.HOME, 'Cryptoip'))
+    cryptoipPath = path.join(process.env.HOME, 'Cryptoip')
 } else {
-    cryptoipPath = path.join(process.env.APPDATA, "cryptoip")
+    cryptoipPath = path.join(process.env.APPDATA, "Cryptoip")
 }
 contextBridge.exposeInMainWorld('electron', {
     configApi: {
@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld('electron', {
             fs.writeFileSync(path.join(cryptoipPath, 'config.json'), JSON.stringify(data));
         },
         clearData() {
-            fs.writeFileSync(path.join(pcryptoipPath, 'config.json'), encrypt(fs.readFileSync(path.join(cryptoipPath, 'config.json')), randomString(16)));
+            fs.writeFileSync(path.join(cryptoipPath, 'config.json'), encrypt(fs.readFileSync(path.join(cryptoipPath, 'config.json')), randomString(16)));
             fs.unlinkSync(path.join(cryptoipPath, 'config.json'));
             fs.writeFileSync(path.join(cryptoipPath, 'messages.json'), encrypt(fs.readFileSync(path.join(cryptoipPath, 'messages.json')), randomString(16)));
             fs.unlinkSync(path.join(cryptoipPath, 'messages.json'));

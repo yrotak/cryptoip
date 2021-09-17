@@ -60,12 +60,14 @@ function bytesToBase64(bytes) {
     }
     return result;
 }
+
+
 const Server = (props, ref) => {
     const [muted, setMuted] = useState(false);
     const [inCall, setInCall] = useState(false);
     const [serverInfos, setServerInfos] = useState({});
     const [channelsServer, setChannels] = useState([]);
-    const [messagesStored, setMessagesStored] = useState(electron.configApi.readMessages(props.userInfos.password , serverInfos.endpoint));
+    const [messagesStored, setMessagesStored] = useState(electron.configApi.readMessages(props.userInfos.password, serverInfos.endpoint));
     const [clientCallList, setClientCallList] = useState([]);
     useImperativeHandle(ref, () => ({
         setServerInfos(msg) {
@@ -81,8 +83,6 @@ const Server = (props, ref) => {
             setClientCallList(msg)
         },
         addNotification(channelname) {
-            console.log(currentChannel);
-            console.log(channelname);
             if (currentChannel != channelname) {
                 setChannels(channelsServer => channelsServer.map(channel => {
                     if (channel.name == channelname) {
@@ -96,6 +96,79 @@ const Server = (props, ref) => {
             }
         }
     }), [])
+    let bufferSize = 4096,
+        context,
+        processor,
+        input,
+        globalStream;
+
+    const constraints = {
+        audio: true,
+        video: false,
+    };
+
+    function initRecording() {
+        var context = new AudioContext({
+            latencyHint: 'interactive',
+            sampleRate: 44100,
+        });
+        processor = context.createScriptProcessor(bufferSize, 1, 1);
+        processor.connect(context.destination);
+        context.resume();
+
+        var handleSuccess = function (stream) {
+            globalStream = stream;
+            input = context.createMediaStreamSource(stream);
+            input.connect(processor);
+            processor.onaudioprocess = function (e) {
+                microphoneProcess(e);
+            };
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints).then(handleSuccess);
+    }
+
+    function microphoneProcess(e) {
+        var left = e.inputBuffer.getChannelData(0);
+        // var left16 = convertFloat32ToInt16(left); // old 32 to 16 function
+        // var left16 = downsampleBuffer(left, 44100, 16000);
+        props.socket.emit('testvocal', left);
+    }
+    function stopRecording() {
+        let track = globalStream.getTracks()[0];
+        track.stop();
+        input.disconnect(processor);
+        input = null;
+        processor = null;
+        context = null;
+    }
+    var downsampleBuffer = function (buffer, sampleRate, outSampleRate) {
+        if (outSampleRate == sampleRate) {
+            return buffer;
+        }
+        if (outSampleRate > sampleRate) {
+            throw 'downsampling rate show be smaller than original sample rate';
+        }
+        var sampleRateRatio = sampleRate / outSampleRate;
+        var newLength = Math.round(buffer.length / sampleRateRatio);
+        var result = new Int16Array(newLength);
+        var offsetResult = 0;
+        var offsetBuffer = 0;
+        while (offsetResult < result.length) {
+            var nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
+            var accum = 0,
+                count = 0;
+            for (var i = offsetBuffer; i < nextOffsetBuffer && i < buffer.length; i++) {
+                accum += buffer[i];
+                count++;
+            }
+
+            result[offsetResult] = Math.min(1, accum / count) * 0x7fff;
+            offsetResult++;
+            offsetBuffer = nextOffsetBuffer;
+        }
+        return result.buffer;
+    };
     const [messageTyping, setMessageTyping] = useState('');
     return (
         <div className="server">
@@ -123,43 +196,44 @@ const Server = (props, ref) => {
                     <button className={"form-button-outline button-call " + (inCall ? 'show' : 'hidden')} onClick={() => {
                         setInCall(false);
                         props.socket.emit("quitCall");
-                        clearInterval(callThread);
+                        stopRecording();
                     }}><i className="fas fa-phone-slash"></i></button>
                 </div>
                 <button className={"form-button-outline call-btn " + (inCall ? 'hidden' : 'show')} onClick={() => {
                     setInCall(true);
                     props.socket.emit("joinCall");
-                    console.log("lesgooo");
-                    var constraints = {
-                        audio: true
-                    };
-                    navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
-                        console.log("callback");
-                        var mediaRecorder = new MediaRecorder(mediaStream);
-                        mediaRecorder.onstart = function (e) {
-                            this.chunks = [];
-                        };
-                        mediaRecorder.ondataavailable = function (e) {
-                            this.chunks.push(e.data);
-                        };
-                        mediaRecorder.onstop = function (e) {
-                            var blob = new Blob(this.chunks, {
-                                'type': 'audio/webm; codecs=opus'
-                            });
-                            var enc = new TextEncoder();
-                            if (!muted) {
-                                blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey.slice(0,16)).buffer, enc.encode(serverInfos.mainKey.slice(0,16)).buffer)));
-                            }
-                        };
-                        callThread = setInterval(() => {
-                            if (mediaRecorder.state != "recording") {
-                                mediaRecorder.start();
-                                setTimeout(() => {
-                                    mediaRecorder.stop();
-                                }, 450);
-                            }
-                        }, 10);
-                    });
+                    initRecording();
+                    // console.log("lesgooo");
+                    // var constraints = {
+                    //     audio: true
+                    // };
+                    // navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
+                    //     console.log("callback");
+                    //     var mediaRecorder = new MediaRecorder(mediaStream);
+                    //     mediaRecorder.onstart = function (e) {
+                    //         this.chunks = [];
+                    //     };
+                    //     mediaRecorder.ondataavailable = function (e) {
+                    //         this.chunks.push(e.data);
+                    //     };
+                    //     mediaRecorder.onstop = function (e) {
+                    //         var blob = new Blob(this.chunks, {
+                    //             'type': 'audio/webm; codecs=opus'
+                    //         });
+                    //         var enc = new TextEncoder();
+                    //         if (!muted) {
+                    //             blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey.slice(0,16)).buffer, enc.encode(serverInfos.mainKey.slice(0,16)).buffer)));
+                    //         }
+                    //     };
+                    //     callThread = setInterval(() => {
+                    //         if (mediaRecorder.state != "recording") {
+                    //             mediaRecorder.start();
+                    //             setTimeout(() => {
+                    //                 mediaRecorder.stop();
+                    //             }, 450);
+                    //         }
+                    //     }, 10);
+                    // });
                 }}><i className="fas fa-phone"></i></button>
 
                 <h5 className="title motd">{serverInfos.motd}</h5>
@@ -245,7 +319,7 @@ const Server = (props, ref) => {
                         var encryptionKey = randomString(32);
                         var selectedChannel = channelsServer[channelsServer.findIndex(p => p.name == currentChannel)];
                         var signature = electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence);
-                        if(messageTyping.replace(/\s/g, '').length != 0) {
+                        if (messageTyping.replace(/\s/g, '').length != 0) {
                             if (selectedChannel.name == "main") {
                                 props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
                                     message: electron.utilApi.enc(messageTyping, encryptionKey),
@@ -270,7 +344,7 @@ const Server = (props, ref) => {
                                     checked: electron.utilApi.verifySign(messageTyping, signature, props.keyPair.publicKey)
                                 }
                                 ])
-                                var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight-50;
+                                var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight - 50;
                                 if (shouldScroll)
                                     messagesElem.scrollTop = messagesElem.scrollHeight;
                             }

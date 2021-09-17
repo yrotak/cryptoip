@@ -77,13 +77,20 @@ const Main = (props) => {
     const connectToServer = (e, server, username) => {
         e.preventDefault();
         setCurrentUsername(username);
-        socket = io("http://" + server);
+        socket = io("http://" + server,
+            {
+                'reconnection delay': 100,
+                'max reconnection attempts': 4
+            });
         var serverMainKey = "";
         var channelsPublickeys = [];
+        socket.on('disconnect', function () {
+            disconnect()
+        });
         socket.on("connect", () => {
             electron.configApi.writeConfigConnect(server, username);
-            setConnected(true);
             socket.on("publicKey", (publicKey) => {
+                setConnected(true);
                 var secureKey = randomString(32);
                 socket.emit("connection", electron.utilApi.enc(JSON.stringify({ username: username, keyHash: props.userInfos.keyHash, publicKey: keyPair.publicKey }), secureKey), electron.utilApi.encRSA(secureKey, publicKey));
                 socket.on("infos", function (infos, secureKeyEncrypt) {
@@ -112,7 +119,7 @@ const Main = (props) => {
                 socket.on("message", function (messageData, secureKeyEncrypt) {
                     var messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))).toString());
                     var messagesElem = getElementByXpath('/html/body/div/div/div[2]/div/div[3]/div/div');
-                    var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight-50;
+                    var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight - 50;
                     var content = electron.utilApi.dec(messageDataDecrypt.message, new TextDecoder().decode(electron.utilApi.decRSA(base64ToBytes(messageDataDecrypt.encryptionKey), keyPair.privateKey)));
                     serverRef.current.addNotification(messageDataDecrypt.isMain ? 'main' : messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author)
                     serverRef.current.setMessagesStored(messagesStored => [...messagesStored, {
@@ -159,6 +166,19 @@ const Main = (props) => {
                     var callListDecrypt = JSON.parse(electron.utilApi.dec(callListReceive, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
                     serverRef.current.setClientCallList(callListDecrypt);
                 });
+                var context = new AudioContext();
+                var startAt = 0;
+                socket.on("testvocal", (data) => {
+                    var floats = new Float32Array(data);
+                    var source = context.createBufferSource();
+                    var buffer = context.createBuffer(1, floats.length, 44100);
+                    buffer.getChannelData(0).set(floats);
+                    source.buffer = buffer;
+                    source.connect(context.destination);
+                    startAt = Math.max(context.currentTime, 0);
+                    source.start(0);
+                    startAt += buffer.duration;
+                });
                 socket.on('voice', function (data) {
                     // var floats = new Float32Array(data);
                     // var source = context.createBufferSource();
@@ -170,7 +190,7 @@ const Main = (props) => {
                     // source.start(0);
                     // startAt += buffer.duration;
                     var enc = new TextEncoder();
-                    var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey.slice(0,16)).buffer, enc.encode(serverMainKey.slice(0,16)).buffer))], {
+                    var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey.slice(0, 16)).buffer, enc.encode(serverMainKey.slice(0, 16)).buffer))], {
                         'type': 'audio/webm; codecs=opus'
                     });
                     var audio = document.createElement('audio');

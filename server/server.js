@@ -120,6 +120,15 @@ http.listen(port, () => {
         });
       }
     });
+
+    socket.on("testvocal", (data) => {
+      inCall.forEach((usercall) => {
+        if (usercall.socketId != socket.id)
+          io.to(usercall.socketId).emit('testvocal', data);
+      });
+      // io.to(socket.id).emit('testvocal', data);
+    });
+
     socket.on("muteStatus", (muted) => {
       if (online.findIndex(p => p.socketId == socket.id) != -1 && inCall.findIndex(p => p.socketId == socket.id) != -1) {
         inCall[inCall.findIndex(p => p.socketId == socket.id)].muted = muted;

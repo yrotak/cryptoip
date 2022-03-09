@@ -1,5 +1,7 @@
-import React, { useEffect, useState, useImperativeHandle, forwardRef } from 'react';
+import React, { useEffect, useState, useImperativeHandle, forwardRef, useRef } from 'react';
+import axios from 'axios'
 var callThread = null;
+var streamThread = null;
 var currentChannel = "main";
 function randomString(length) {
     var result = '';
@@ -69,6 +71,8 @@ const Server = (props, ref) => {
     const [channelsServer, setChannels] = useState([]);
     const [messagesStored, setMessagesStored] = useState(electron.configApi.readMessages(props.userInfos.password, serverInfos.endpoint));
     const [clientCallList, setClientCallList] = useState([]);
+    const [blobscreenshare, setblobscreenshare] = useState("")
+    const [blobscreenshareret, setblobscreenshareret] = useState("")
     useImperativeHandle(ref, () => ({
         setServerInfos(msg) {
             setServerInfos(msg)
@@ -78,6 +82,10 @@ const Server = (props, ref) => {
         },
         setMessagesStored(msg) {
             setMessagesStored(msg);
+        },
+        setblobscreenshare(blob) {
+            setblobscreenshareret(window.URL.createObjectURL(blob))
+            setTimeout(() => setblobscreenshare(window.URL.createObjectURL(blob)), 50)
         },
         setClientCallList(msg) {
             setClientCallList(msg)
@@ -96,7 +104,7 @@ const Server = (props, ref) => {
             }
         }
     }), [])
-    let bufferSize = 2048,
+    /*let bufferSize = 2048,
         context,
         processor,
         input,
@@ -177,15 +185,62 @@ const Server = (props, ref) => {
             offsetBuffer = nextOffsetBuffer;
         }
         return result.buffer;
-    };
+    };*/
     const [messageTyping, setMessageTyping] = useState('');
+    const [dragging, setDragging] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [watchingscreen, setwatchingscreen] = useState(false);
+    const [screensharing, setscreensharing] = useState(false);
+    const [progress, setProgress] = useState(0);
+    const dragndropelm = useRef();
+    useEffect(() => {
+        let dragHandle;
+        document.body.addEventListener("dragover", (e) => {
+            dragndropelm.current.style['pointer-events'] = "all";
+            clearTimeout(dragHandle);
+            dragHandle = setTimeout(() => {
+                dragndropelm.current.style['pointer-events'] = "none";
+            }, 200);
+        });
+    }, [])
     return (
         <div className="server">
+            <div ref={dragndropelm} onDragEnter={() => setDragging(uploading ? false : true)}
+                onDragLeave={() => setDragging(false)}
+                onDragEnd={() => setDragging(false)}
+                onDragOver={e => e.preventDefault()}
+                onDrop={(e) => {
+                    setDragging(false)
+                    let dt = e.dataTransfer
+                    let files = dt.files
+                    console.log(files, dt);
+                    let formData = new FormData()
+
+                    formData.append("file", files[0])
+                    formData.append("receiver", currentChannel)
+                    formData.append("keyHash", props.keyHash)
+                    setUploading(true);
+                    axios.post("http://" + serverInfos.endpoint + "/send_file", formData, {
+                        headers: {
+                            "Content-Type": "multipart/form-data",
+                        },
+                        onUploadProgress: data => {
+                            setProgress(Math.round((100 * data.loaded) / data.total))
+                        },
+                    }).then(res => {
+                        setUploading(false);
+                    })
+                }}
+                className="dragdrophandler"></div>
+
             <div className="server-info">
                 <h2 className="title host-title">{serverInfos.endpoint}</h2>
                 <button className="form-button disconnect-button" onClick={() => {
                     setMuted(false);
                     setInCall(false);
+                    setscreensharing(false);
+                    setwatchingscreen(false);
+                    clearInterval(streamThread)
                     clearInterval(callThread);
                     props.disconnect();
                 }}><i className="fas fa-running"></i> Disconnect</button>
@@ -203,46 +258,102 @@ const Server = (props, ref) => {
                         }
                     }}><i className="fas fa-microphone-slash"></i></button>
                     <button className={"form-button-outline button-call " + (inCall ? 'show' : 'hidden')} onClick={() => {
+                        if (inCall && !screensharing) {
+                            props.socket.emit("screenStatus", true);
+                            setscreensharing(true)
+                            navigator.mediaDevices.getDisplayMedia({
+                                video: {
+                                    cursor: "always"
+                                },
+                                audio: {
+                                    echoCancellation: true,
+                                    noiseSuppression: true
+                                }
+                            }).then((stream) => {
+                                // let videoelem = document.createElement("video");
+                                // videoelem.style.position = "absolute";
+                                // videoelem.style.transform = "translate(-50%, -50%)"
+                                // videoelem.style.width = "100%"
+                                // videoelem.style.height = "100%"
+                                // videoelem.style.left = "50%"
+                                // videoelem.style.top = "50%"
+                                var mediaRecorder = new MediaRecorder(stream);
+                                mediaRecorder.onstart = function (e) {
+                                    this.chunks = [];
+                                };
+                                mediaRecorder.ondataavailable = function (e) {
+                                    this.chunks.push(e.data);
+                                };
+                                mediaRecorder.onstop = function (e) {
+                                    var blob = new Blob(this.chunks, {
+                                        'type': 'video/webm; codecs=opus'
+                                    });
+                                    var enc = new TextEncoder();
+
+                                    blob.arrayBuffer().then(array => props.socket.emit('screen', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey.slice(0, 16)).buffer, enc.encode(serverInfos.mainKey.slice(0, 16)).buffer)));
+                                    // videoelem.src = window.URL.createObjectURL(blob)
+                                    // videoelem.play()
+                                };
+                                streamThread = setInterval(() => {
+                                    if (mediaRecorder.state != "recording") {
+                                        mediaRecorder.start();
+                                        setTimeout(() => {
+                                            mediaRecorder.stop();
+                                        }, 450);
+                                    }
+                                }, 10);
+                            }).catch((err) => {
+                                console.log("unable to get display media" + err)
+                            })
+                        } else if (screensharing && inCall) {
+                            setscreensharing(false);
+                            props.socket.emit("screenStatus", false);
+                            clearInterval(streamThread)
+                        }
+                    }}><i class="fas fa-tv"></i></button>
+                    <button className={"form-button-outline button-call " + (inCall ? 'show' : 'hidden')} onClick={() => {
                         setInCall(false);
+                        setscreensharing(false);
+                        setwatchingscreen(false);
                         props.socket.emit("quitCall");
-                        stopRecording();
+                        clearInterval(callThread);
+                        clearInterval(streamThread)
                     }}><i className="fas fa-phone-slash"></i></button>
                 </div>
                 <button className={"form-button-outline call-btn " + (inCall ? 'hidden' : 'show')} onClick={() => {
                     setInCall(true);
                     props.socket.emit("joinCall");
-                    initRecording();
-                    // console.log("lesgooo");
-                    // var constraints = {
-                    //     audio: true
-                    // };
-                    // navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
-                    //     console.log("callback");
-                    //     var mediaRecorder = new MediaRecorder(mediaStream);
-                    //     mediaRecorder.onstart = function (e) {
-                    //         this.chunks = [];
-                    //     };
-                    //     mediaRecorder.ondataavailable = function (e) {
-                    //         this.chunks.push(e.data);
-                    //     };
-                    //     mediaRecorder.onstop = function (e) {
-                    //         var blob = new Blob(this.chunks, {
-                    //             'type': 'audio/webm; codecs=opus'
-                    //         });
-                    //         var enc = new TextEncoder();
-                    //         if (!muted) {
-                    //             blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey.slice(0,16)).buffer, enc.encode(serverInfos.mainKey.slice(0,16)).buffer)));
-                    //         }
-                    //     };
-                    //     callThread = setInterval(() => {
-                    //         if (mediaRecorder.state != "recording") {
-                    //             mediaRecorder.start();
-                    //             setTimeout(() => {
-                    //                 mediaRecorder.stop();
-                    //             }, 450);
-                    //         }
-                    //     }, 10);
-                    // });
+                    console.log("lesgooo");
+                    var constraints = {
+                        audio: true
+                    };
+                    navigator.mediaDevices.getUserMedia(constraints).then(function (mediaStream) {
+                        console.log("callback");
+                        var mediaRecorder = new MediaRecorder(mediaStream);
+                        mediaRecorder.onstart = function (e) {
+                            this.chunks = [];
+                        };
+                        mediaRecorder.ondataavailable = function (e) {
+                            this.chunks.push(e.data);
+                        };
+                        mediaRecorder.onstop = function (e) {
+                            var blob = new Blob(this.chunks, {
+                                'type': 'audio/webm; codecs=opus'
+                            });
+                            var enc = new TextEncoder();
+                            if (!muted) {
+                                blob.arrayBuffer().then(array => props.socket.emit('radio', Crypto.encrypt_aes_cbc(Crypto.pkcs_pad(array), enc.encode(serverInfos.mainKey.slice(0, 16)).buffer, enc.encode(serverInfos.mainKey.slice(0, 16)).buffer)));
+                            }
+                        };
+                        callThread = setInterval(() => {
+                            if (mediaRecorder.state != "recording") {
+                                mediaRecorder.start();
+                                setTimeout(() => {
+                                    mediaRecorder.stop();
+                                }, 450);
+                            }
+                        }, 10);
+                    });
                 }}><i className="fas fa-phone"></i></button>
 
                 <h5 className="title motd">{serverInfos.motd}</h5>
@@ -251,7 +362,7 @@ const Server = (props, ref) => {
             <div className="users">
                 {
                     channelsServer.map((channel) => (
-                        <div key={randomString(16)}>
+                        <div key={channel.name}>
                             {
                                 channel.name != props.username ? (
                                     <a disabled={currentChannel == channel.name} className="channel-button" onClick={() => {
@@ -282,6 +393,18 @@ const Server = (props, ref) => {
                 }
             </div>
 
+            {
+                watchingscreen ? (
+                    <div className="screenshare">
+                        <button className='closebtn' onClick={() => setwatchingscreen(false)}>&times;</button>
+                        <video loop autoPlay muted src={blobscreenshareret} className="vid"></video>
+                        <video loop autoPlay muted src={blobscreenshare} className="vid"></video>
+                    </div>
+                ) : (
+                    <></>
+                )
+            }
+
             <div className="panel">
                 <div className="channel" style={{ width: inCall ? '85%' : '100%' }}>
                     <h4 className="title currentChannel-name">{currentChannel}</h4>
@@ -291,28 +414,39 @@ const Server = (props, ref) => {
                                 messagesStored.map(message => (
                                     <>
                                         {
-                                            message.channel == currentChannel ? (
+                                            message.channel == currentChannel && !message.isFile ? (
                                                 <li key={randomString(16)} className={"message-holder " + (message.owned ? 'mine' : '')}>
-                                                    {
-                                                        message.owned ? (
-                                                            <p style={{ color: '#131313', userSelect: 'none' }}>I</p>
-                                                        ) : (
-                                                            <></>
-                                                        )
-                                                    }
                                                     <div className={"message " + (message.owned ? 'mine' : '')}>
                                                         <h5 className="title">{message.author}</h5>
                                                         <div className="message-content">
                                                             <p className="text-normal">{message.content}</p>
-                                                            <div className="signature-check">
-                                                                <i style={{ color: (message.checked ? '#19b019' : '#b02819') }} className={"fas fa-" + (message.checked ? 'check-square' : 'times')}></i>
-                                                                <p className="hover"><strong>Signature:</strong>{message.signature + ' (' + (message.checked ? 'valid' : 'invalid') + ')'}</p>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </li>
                                             ) : (
-                                                <></>
+                                                message.channel == currentChannel && message.isFile ? (
+                                                    <li key={randomString(16)} className="message-file">
+                                                        <h5 className="title">{message.author}</h5>
+                                                        {
+                                                            message.isImage ? (
+                                                                <img src={message.bloburl} className="img"></img>
+                                                            ) : (
+                                                                <div className='file'>
+                                                                    <h4 className="title">{message.filename}</h4>
+                                                                    <i class="fas fa-download icon" onClick={() => {
+                                                                        const element = document.createElement("a");
+                                                                        const file = new Blob([message.data], { type: message.type });
+                                                                        element.href = URL.createObjectURL(file);
+                                                                        element.download = message.filename;
+                                                                        element.click();
+                                                                    }}></i>
+                                                                </div>
+                                                            )
+                                                        }
+                                                    </li>
+                                                ) : (
+                                                    <></>
+                                                )
                                             )
                                         }
                                     </>
@@ -324,33 +458,28 @@ const Server = (props, ref) => {
                     </div>
                     <form className="sendMessage" onSubmit={(e) => {
                         e.preventDefault();
-                        var secureKey = randomString(32);
-                        var encryptionKey = randomString(32);
-                        var selectedChannel = channelsServer[channelsServer.findIndex(p => p.name == currentChannel)];
-                        var signature = electron.utilApi.signData(messageTyping, props.keyPair.privateKey, props.userInfos.passSentence);
+                        let secureKey = randomString(32);
+                        let encryptionKey = randomString(32);
+                        let selectedChannel = channelsServer[channelsServer.findIndex(p => p.name == currentChannel)];
+
                         if (messageTyping.replace(/\s/g, '').length != 0) {
                             if (selectedChannel.name == "main") {
                                 props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
                                     message: electron.utilApi.enc(messageTyping, encryptionKey),
                                     encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, serverInfos.publicKey)),
-                                    signature: signature,
-                                    receiver: selectedChannel.socketId,
-                                    publicKey: btoa(props.keyPair.publicKey)
+                                    receiver: selectedChannel.socketId
                                 }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
                             } else {
                                 props.socket.emit("message", electron.utilApi.enc(JSON.stringify({
                                     message: electron.utilApi.enc(messageTyping, encryptionKey),
                                     encryptionKey: bytesToBase64(electron.utilApi.encRSA(encryptionKey, channelsServer[channelsServer.findIndex(p => p.name == currentChannel)].publicKey)),
-                                    signature: signature,
                                     receiver: selectedChannel.socketId
                                 }), secureKey), electron.utilApi.encRSA(secureKey, serverInfos.publicKey));
                                 setMessagesStored(messagesStored => [...messagesStored, {
                                     channel: selectedChannel.name,
                                     author: props.username,
                                     content: messageTyping,
-                                    owned: true,
-                                    signature: signature,
-                                    checked: electron.utilApi.verifySign(messageTyping, signature, props.keyPair.publicKey)
+                                    owned: true
                                 }
                                 ])
                                 var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight - 50;
@@ -371,7 +500,11 @@ const Server = (props, ref) => {
                             <div className="call-list">
                                 {
                                     clientCallList.map((client) => (
-                                        <a className="user-call" key={randomString(16)}>{channelsServer[channelsServer.findIndex(p => p.socketId == client.socketId)].name} <i className={"fas fa-microphone-slash " + (client.muted ? 'show' : 'hidden')}></i></a>
+                                        <a className="user-call" key={randomString(16)} onClick={() => {
+                                            console.log(channelsServer.find(p => p.socketId == client.socketId).name);
+                                            props.whowatchomg(channelsServer.find(p => p.socketId == client.socketId).name)
+                                            setwatchingscreen(true)
+                                        }}>{channelsServer.find(p => p.socketId == client.socketId).name} <i className={"fas fa-microphone-slash " + (client.muted ? 'show' : 'hidden')}></i> <i class={"fas fa-circle " + (client.screensharing ? 'show' : 'hidden')}></i></a>
                                     ))
                                 }
                             </div>
@@ -381,6 +514,31 @@ const Server = (props, ref) => {
                     )
                 }
             </div>
+            {
+                dragging ? (
+                    <div className='dragging'>
+                        <div className='middle'>
+                            <i class="fas fa-upload icon"></i>
+                            <h4>Upload file now</h4>
+                        </div>
+                    </div>
+                ) : (
+                    <></>
+                )
+            }
+            {
+                uploading ? (
+                    <div className='uploading'>
+                        <div className='progressbar'>
+                            <div className='progress' style={{ width: progress.toString() + "%" }}>
+                                <span className='text'>{progress.toString()}%</span>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <></>
+                )
+            }
         </div>
     );
 };

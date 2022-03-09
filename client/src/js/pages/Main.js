@@ -3,7 +3,7 @@ import ConnectToServer from '../components/ConnectToServer';
 import io from "socket.io-client";
 import Server from '../components/Server';
 var socket = null;
-
+var whowhattttttt = "";
 function randomString(length) {
     var result = '';
     var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -73,6 +73,10 @@ const Main = (props) => {
     const [connected, setConnected] = useState(false);
     const [keyPair, setKeyPair] = useState(electron.utilApi.createKeys());
     const [currentUsername, setCurrentUsername] = useState("");
+    const [whowatch, setwhowatch] = useState("");
+    useEffect(() => {
+        whowhattttttt = whowatch
+    }, [whowatch])
     let serverRef = useRef();
     const connectToServer = (e, server, username) => {
         e.preventDefault();
@@ -94,7 +98,7 @@ const Main = (props) => {
                 var secureKey = randomString(32);
                 socket.emit("connection", electron.utilApi.enc(JSON.stringify({ username: username, keyHash: props.userInfos.keyHash, publicKey: keyPair.publicKey }), secureKey), electron.utilApi.encRSA(secureKey, publicKey));
                 socket.on("infos", function (infos, secureKeyEncrypt) {
-                    var infosDecrypt = JSON.parse(electron.utilApi.dec(infos, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
+                    let infosDecrypt = JSON.parse(electron.utilApi.dec(infos, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
                     serverRef.current.setServerInfos({
                         endpoint: server,
                         motd: infosDecrypt.motd,
@@ -104,7 +108,7 @@ const Main = (props) => {
                     serverMainKey = infosDecrypt.mainKey;
                 });
                 socket.on("clientList", function (clientList, secureKeyEncrypt) {
-                    var clientListDecrypt = JSON.parse(electron.utilApi.dec(clientList, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
+                    let clientListDecrypt = JSON.parse(electron.utilApi.dec(clientList, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
                     serverRef.current.setChannels([{ name: "main", socketId: "none", unread: 0 }]);
                     clientListDecrypt.forEach((client) => {
                         serverRef.current.setChannels(channelsServer => [...channelsServer, { name: client.username, socketId: client.socketId, publicKey: client.publicKey, unread: 0 }]);
@@ -117,20 +121,20 @@ const Main = (props) => {
                     alert(electron.utilApi.dec(reason, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
                 });
                 socket.on("message", function (messageData, secureKeyEncrypt) {
-                    var messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))).toString());
-                    var messagesElem = getElementByXpath('/html/body/div/div/div[2]/div/div[3]/div/div');
-                    var shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight - 50;
-                    var content = electron.utilApi.dec(messageDataDecrypt.message, new TextDecoder().decode(electron.utilApi.decRSA(base64ToBytes(messageDataDecrypt.encryptionKey), keyPair.privateKey)));
+                    let messageDataDecrypt = JSON.parse(electron.utilApi.dec(messageData, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))).toString());
+                    let messagesElem = document.querySelector("#root > div > div.page.main > div > div.panel > div > div");
+                    let shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight - 50;
+                    let content = electron.utilApi.dec(messageDataDecrypt.message, new TextDecoder().decode(electron.utilApi.decRSA(base64ToBytes(messageDataDecrypt.encryptionKey), keyPair.privateKey)));
                     serverRef.current.addNotification(messageDataDecrypt.isMain ? 'main' : messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author)
                     serverRef.current.setMessagesStored(messagesStored => [...messagesStored, {
                         channel: messageDataDecrypt.isMain ? 'main' : messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author,
                         author: messageDataDecrypt.author,
                         content: content,
                         owned: messageDataDecrypt.author == username,
-                        signature: messageDataDecrypt.signature,
-                        checked: messageDataDecrypt.isMain ?
-                            electron.utilApi.verifySign(content, messageDataDecrypt.signature, atob(messageDataDecrypt.publicKey)) :
-                            electron.utilApi.verifySign(content, messageDataDecrypt.signature, channelsPublickeys.find(p => p.name == messageDataDecrypt.author == username ? messageDataDecrypt.receiverName : messageDataDecrypt.author).publicKey)
+                        isFile: false,
+                        data: null,
+                        filename: null,
+                        isImage: false
                     }
                     ])
                     // serverRef.current.setChannels(channelsServer => channelsServer.map(channel => {
@@ -154,37 +158,56 @@ const Main = (props) => {
                     if (shouldScroll)
                         messagesElem.scrollTop = messagesElem.scrollHeight;
                 });
+                socket.on("file", (data) => {
+                    let messagesElem = document.querySelector("#root > div > div.page.main > div > div.panel > div > div");
+                    let shouldScroll = messagesElem.scrollTop + messagesElem.clientHeight > messagesElem.scrollHeight - 50;
+                    serverRef.current.addNotification(data.isMain ? 'main' : data.from == username ? data.receiver : data.from)
+                    let blob = new Blob([data.data], {
+                        'type': data.type
+                    });
+                    serverRef.current.setMessagesStored(messagesStored => [...messagesStored, {
+                        channel: data.isMain ? 'main' : filedataDecrypt.from == username ? data.receiver : data.from,
+                        author: data.from,
+                        content: "",
+                        owned: data.from == username,
+                        isFile: true,
+                        data: data.data,
+                        bloburl: data.isImage ? window.URL.createObjectURL(blob) : null,
+                        filename: data.filename,
+                        isImage: data.isImage,
+                        type: data.type
+                    }
+                    ])
+                    if (shouldScroll)
+                        messagesElem.scrollTop = messagesElem.scrollHeight;
+                })
+                socket.on("screenshare", (data, from) => {
+                    console.log(from, whowhattttttt);
+                    console.log(whowhattttttt);
+                    if (from == whowhattttttt) {
+                        console.log("omg");
+                        let enc = new TextEncoder();
+                        let blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey.slice(0, 16)).buffer, enc.encode(serverMainKey.slice(0, 16)).buffer))], {
+                            'type': 'video/webm'
+                        });
+                        serverRef.current.setblobscreenshare(blob)
+                    }
+                })
                 socket.on("joinedcall", () => {
-                    var audio = new Audio('./connected.wav');
+                    let audio = new Audio('./connected.wav');
+                    audio.play();
+                });
+                socket.on("joinedcall", () => {
+                    let audio = new Audio('./connected.wav');
                     audio.play();
                 });
                 socket.on("disconnectcall", () => {
-                    var audio = new Audio('./disconnect.wav');
+                    let audio = new Audio('./disconnect.wav');
                     audio.play();
                 });
                 socket.on("callList", (callListReceive, secureKeyEncrypt) => {
-                    var callListDecrypt = JSON.parse(electron.utilApi.dec(callListReceive, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
+                    let callListDecrypt = JSON.parse(electron.utilApi.dec(callListReceive, new TextDecoder().decode(electron.utilApi.decRSA(secureKeyEncrypt, keyPair.privateKey))));
                     serverRef.current.setClientCallList(callListDecrypt);
-                });
-                var context = new AudioContext();
-                var startAt = 0;
-                var compression_mode = 1,
-                    my_lzma = new LZMA("./thirdparty/lzma_worker.js");
-                socket.on("testvocal", (data) => {
-                    my_lzma.decompress(result, function on_decompress_complete(result) {
-                        var floats = new Float32Array(result);
-                        var source = context.createBufferSource();
-                        var buffer = context.createBuffer(1, floats.length, 44100);
-                        buffer.getChannelData(0).set(floats);
-                        source.buffer = buffer;
-                        source.connect(context.destination);
-                        startAt = Math.max(context.currentTime, 0);
-                        source.start(0);
-                        startAt += buffer.duration;
-                    }, function on_decompress_progress_update(percent) {
-                        /// Decompressing progress code goes here.
-                        document.title = "Decompressing: " + (percent * 100) + "%";
-                    });
                 });
                 socket.on('voice', function (data) {
                     // var floats = new Float32Array(data);
@@ -196,11 +219,11 @@ const Main = (props) => {
                     // startAt = Math.max(context.currentTime, 0);
                     // source.start(0);
                     // startAt += buffer.duration;
-                    var enc = new TextEncoder();
-                    var blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey.slice(0, 16)).buffer, enc.encode(serverMainKey.slice(0, 16)).buffer))], {
+                    let enc = new TextEncoder();
+                    let blob = new Blob([Crypto.pkcs_unpad(Crypto.decrypt_aes_cbc(data, enc.encode(serverMainKey.slice(0, 16)).buffer, enc.encode(serverMainKey.slice(0, 16)).buffer))], {
                         'type': 'audio/webm; codecs=opus'
                     });
-                    var audio = document.createElement('audio');
+                    let audio = document.createElement('audio');
                     audio.src = window.URL.createObjectURL(blob);
                     audio.play();
                 });
@@ -216,7 +239,7 @@ const Main = (props) => {
         <div className="page main">
             {
                 connected ? (
-                    <Server socket={socket} username={currentUsername} userInfos={props.userInfos} keyPair={keyPair} disconnect={disconnect} ref={serverRef} />
+                    <Server socket={socket} username={currentUsername} whowatchomg={(e) => setwhowatch(e)} userInfos={props.userInfos} keyPair={keyPair} keyHash={props.userInfos.keyHash} disconnect={disconnect} ref={serverRef} />
                 ) : (
                     <ConnectToServer userInfos={props.userInfos} connectToServerHandle={connectToServer} />
                 )

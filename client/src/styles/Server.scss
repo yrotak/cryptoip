@@ -1,4 +1,117 @@
 .server {
+    .dragging {
+        display: flex;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        justify-content: center;
+        align-items: center;
+        align-content: center;
+        background-color: #1313137c;
+        .middle {
+            background-color: #232323;
+            border-radius: 5px;
+            border: 1px solid #333333;
+            padding: 15px;
+            color: #eeeeff;
+            text-align: center;
+            .icon {
+                font-size: 36px;
+                animation: pulse 2s linear infinite;
+                margin-bottom: 15px;
+            }
+        }
+    }
+    .uploading {
+        position: absolute;
+        right: 15px;
+        bottom: 15px;
+        padding: 15px;
+        padding-top: 25px;
+        padding-bottom: 25px;
+        border-radius: 5px;
+        border: 1px solid #1d1d1d;
+        background: #131313;
+        display: flex;
+        justify-content: center;
+        align-content: center;
+        align-items: center;
+        .progressbar {
+            background: #232323;
+            border-radius: 4px;
+            width: 200px;
+            height: 20px;
+            position: relative;
+            .progress {
+                background: #931621;
+                height: 100%;
+                border-radius: 4px;
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                .text {
+                    font-size: 12px;
+                    color: #eeeeff;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    bottom: 0;
+                }
+            }
+        }
+    }
+    .screenshare {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 90%;
+        height: 90%;
+        transform: translate(-50%, -50%);
+        border-radius: 4px;
+        background: #0f0f0f;
+
+        z-index: 99;
+        border: 1px solid #1d1d1d;
+        .vid {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 4px;
+        }
+        .closebtn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #000;
+            color: #eeeeff;
+            border-radius: 4px;
+            font-size: 36px;
+            border: none;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            z-index: 9999;
+            &:focus {
+                outline: none;
+            }
+        }
+    }
+    .dragdrophandler {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        z-index: 9999;
+        pointer-events: none;
+    }
     .title {
         color: #eeeeff;
     }
@@ -160,9 +273,7 @@
         list-style-type: none;
         display: flex;
         margin: 5px;
-        &.mine {
-            justify-content: space-between;
-        }
+
         .message {
             background: #1d1d1d;
             border-radius: 4px;
@@ -170,38 +281,47 @@
             padding: 5px;
             width: 400px;
             &.mine {
-                background: linear-gradient(to bottom left,#6e1018,#931621);
+                background: linear-gradient(to bottom left, #6e1018, #931621);
             }
             .message-content {
                 display: inline;
                 color: #ccc;
             }
-    
+
             .message-content .text-normal {
                 margin-left: 5px;
                 overflow-wrap: break-word;
                 text-align: justify;
                 display: inline;
             }
-            .signature-check {
-                float: right;
-                display: inline;
-                cursor: pointer;
-                &:active .hover {
-                    display: block;
-                }
+        }
+    }
+    .message-file {
+        list-style-type: none;
+        margin: 5px;
+
+        .file {
+            background-color: #1d1d1d;
+            padding: 15px;
+            border-radius: 4px;
+            display: flex;
+            font-size: 16px;
+            justify-content: space-between;
+            width: 400px;
+            .title {
+                text-decoration: none;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+                overflow: hidden;
             }
-            .signature-check .hover {
-                display: none;
+            .icon {
                 color: #ccc;
-                position: absolute;
-                right: 5%;
-                margin-top: -22px;
-                max-width: 350px;
-                word-break: break-all;
-                background: #232323;
-                padding: 4px;
+                cursor: pointer;
             }
+        }
+        .img {
+            max-width: 350px;
+            max-height: 250px;
         }
     }
     .hidden {
@@ -240,5 +360,17 @@
         -moz-transform: translateX(100vw);
         -webkit-transform: translateX(100vw);
         transform: translateX(100vw);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.2;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.2;
     }
 }

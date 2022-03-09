@@ -1,4 +1,4 @@
-const { ipcRenderer, contextBridge } = require('electron');
+const { ipcRenderer, contextBridge, desktopCapturer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -13,13 +13,26 @@ function randomString(length) {
 }
 var isWin = process.platform === "win32";
 var cryptoipPath = ""
-if(!isWin) {
-    if(!fs.existsSync(path.join(process.env.HOME, 'Cryptoip')))
+if (!isWin) {
+    if (!fs.existsSync(path.join(process.env.HOME, 'Cryptoip')))
         fs.mkdirSync(path.join(process.env.HOME, 'Cryptoip'))
     cryptoipPath = path.join(process.env.HOME, 'Cryptoip')
 } else {
     cryptoipPath = path.join(process.env.APPDATA, "Cryptoip")
 }
+contextBridge.exposeInMainWorld("customdisplaymedia", {
+    display: async () => {
+        const sources = await desktopCapturer.getSources({
+            types: ["window", "screen"],
+        });
+
+        // you should create some kind of UI to prompt the user
+        // to select the correct source like Google Chrome does
+        const selectedSource = sources[0]; // this is just for testing purposes
+
+        return selectedSource;
+    }
+});
 contextBridge.exposeInMainWorld('electron', {
     configApi: {
         isRegister() {
